@@ -1,3 +1,19 @@
+@keyframes bg-zoom {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(107, 139, 255, 0.15); }
+  50% { box-shadow: 0 0 24px rgba(107, 139, 255, 0.3); }
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -15,17 +31,25 @@
   --red: #ff5757;
 }
 
-html, body {
-  background: var(--bg);
-  background-image: url('/bg.jpg');
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed;
+html { background: var(--bg); }
+
+body {
+  position: relative;
+  background: transparent;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bg) url('/bg.jpg') center / cover fixed;
+  animation: bg-zoom 20s ease-in-out infinite;
 }
 
 #root {
   min-height: 100vh;
-  backdrop-filter: brightness(0.4);
+  backdrop-filter: brightness(0.35);
 }
 
 body {
@@ -153,7 +177,11 @@ button { font-family: inherit; }
 .demo-note { font-size: 11px; color: var(--text3); margin-top: 1.4rem; line-height: 1.5; }
 
 /* Section wrapper */
-.section { max-width: 960px; margin: 0 auto; padding: 4rem 2rem; }
+.section { max-width: 960px; margin: 0 auto; padding: 4rem 2rem; animation: fade-up 0.7s ease-out both; }
+.section:nth-child(2) { animation-delay: 0.1s; }
+.section:nth-child(3) { animation-delay: 0.2s; }
+.section:nth-child(4) { animation-delay: 0.3s; }
+.section:nth-child(5) { animation-delay: 0.4s; }
 .section-center-head { text-align: center; margin-bottom: 2rem; }
 .section-tag { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 0.6rem; text-align: center; }
 .section-title { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 0.5rem; text-align: center; }
@@ -214,6 +242,7 @@ button { font-family: inherit; }
   width: 100%; background: var(--accent); color: #000; border: none;
   padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 500;
   cursor: pointer; margin-top: 1rem; transition: opacity .15s, transform .15s;
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 .swap-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
 .swap-btn:disabled { cursor: default; }
@@ -353,6 +382,7 @@ button { font-family: inherit; }
   width: 100%; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 600;
   border: none; cursor: pointer; transition: all .15s;
   background: var(--accent2); color: #000;
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 .terminal-action-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
 .terminal-action-btn:disabled { opacity: 0.5; cursor: default; background: var(--s3); color: var(--text3); }
