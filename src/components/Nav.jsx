@@ -5,7 +5,7 @@ export function Nav({ wallet, onOpenModal }) {
 
   return (
     <nav className="nav">
-      <span className="logo">arc<span>fx</span></span>
+      <span className="logo">Anchor<span style={{ color: '#6B8BFF' }}>FX</span></span>
       <ul className="nav-links">
         <li><a href="#exchange">Exchange</a></li>
         <li><a href="#subscriptions">Subscriptions</a></li>
