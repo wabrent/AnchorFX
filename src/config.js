@@ -55,16 +55,6 @@ export const ANCHOR_FX_ROUTER_ABI = [
     outputs: [{ name: 'amountOut', type: 'uint256' }],
     stateMutability: 'nonpayable',
   },
-  {
-    type: 'function',
-    name: 'addLiquidity',
-    inputs: [
-      { name: 'token', type: 'address' },
-      { name: 'amount', type: 'uint256' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
 ]
 
 export const FXSWAP_ABI = [

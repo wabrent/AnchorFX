@@ -9,11 +9,11 @@ interface IERC20 {
 
 /**
  * @title AnchorFXRouter
- * @dev Institutional FX Swap Router for Arc Network
+ * @dev Institutional FX Swap Router built for Arc Network
  */
 contract AnchorFXRouter {
     address public owner;
-    uint256 public feeBps = 10; // 0.1% fee
+    uint256 public feeBps = 5; // 0.05% комиссия протокола
 
     event AnchorSwapped(
         address indexed user,
@@ -24,10 +24,10 @@ contract AnchorFXRouter {
         uint256 timestamp
     );
 
-    event AnchorLiquidityAdded(address indexed provider, address indexed token, uint256 amount);
+    event LiquidityAdded(address indexed provider, address indexed token, uint256 amount);
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "AnchorFX: Not authorized");
+        require(msg.sender == owner, "AnchorFX: Unauthorized");
         _;
     }
 
@@ -35,6 +35,9 @@ contract AnchorFXRouter {
         owner = msg.sender;
     }
 
+    /**
+     * @notice On-chain исполнение обмена стейблкоинов USDC / EURC
+     */
     function swapFX(
         address tokenIn,
         address tokenOut,
@@ -49,7 +52,7 @@ contract AnchorFXRouter {
         uint256 netInput = amountIn - fee;
 
         amountOut = (netInput * exchangeRate) / 1e18;
-        require(amountOut >= minAmountOut, "AnchorFX: Slippage tolerance exceeded");
+        require(amountOut >= minAmountOut, "AnchorFX: Slippage limit exceeded");
 
         require(
             IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn),
@@ -64,12 +67,8 @@ contract AnchorFXRouter {
         emit AnchorSwapped(msg.sender, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
     }
 
-    function addLiquidity(address token, uint256 amount) external {
-        require(amount > 0, "AnchorFX: Zero amount");
-        require(
-            IERC20(token).transferFrom(msg.sender, address(this), amount),
-            "AnchorFX: Deposit failed"
-        );
-        emit AnchorLiquidityAdded(msg.sender, token, amount);
+    function setFee(uint256 _feeBps) external onlyOwner {
+        require(_feeBps <= 50, "AnchorFX: Fee too high");
+        feeBps = _feeBps;
     }
 }
