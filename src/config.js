@@ -35,6 +35,26 @@ const connectors = [
     : []),
 ]
 
+// FXSwap contract — deploy via contracts/FXSwap.sol then paste the address here
+export const FXSWAP_ADDRESS = '0x...' // TODO: replace after deployment
+
+export const FXSWAP_ABI = [
+  {
+    name: 'swapUsdcToEurc',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'usdcAmount', type: 'uint256' }],
+    outputs: [],
+  },
+  {
+    name: 'swapEurcToUsdc',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'eurcAmount', type: 'uint256' }],
+    outputs: [],
+  },
+]
+
 export const config = createConfig({
   chains: [arcTestnet],
   connectors,

@@ -1,15 +1,20 @@
 import { useState } from 'react'
-
-const RATE = 0.9247 // demo rate — not a live price feed
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { parseUnits } from 'viem'
+import { useRate } from '../hooks/useRate'
+import { FXSWAP_ADDRESS, FXSWAP_ABI } from '../config'
 
 export function SwapCard({ wallet, onOpenModal }) {
   const { isConnected, isWrongNetwork, usdcBalance, eurcBalance } = wallet
   const [flipped, setFlipped] = useState(false)
   const [amtIn, setAmtIn] = useState(1000)
-  const [execState, setExecState] = useState('idle') // idle | pending | done
+  const rate = useRate()
 
-  const rate = flipped ? 1 / RATE : RATE
-  const amtOut = (amtIn * rate) || 0
+  const { writeContract, data: hash, isPending } = useWriteContract()
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
+
+  const displayRate = flipped ? 1 / rate : rate
+  const amtOut = (amtIn * displayRate) || 0
 
   const payToken = flipped ? 'EURC' : 'USDC'
   const receiveToken = flipped ? 'USDC' : 'EURC'
@@ -25,10 +30,26 @@ export function SwapCard({ wallet, onOpenModal }) {
 
   function executeSwap() {
     if (!isConnected) { onOpenModal(); return }
-    setExecState('pending')
-    setTimeout(() => setExecState('done'), 1800)
-    setTimeout(() => setExecState('idle'), 4000)
+
+    const amount = parseUnits(String(amtIn), 6)
+    const functionName = payToken === 'USDC' ? 'swapUsdcToEurc' : 'swapEurcToUsdc'
+
+    writeContract({
+      address: FXSWAP_ADDRESS,
+      abi: FXSWAP_ABI,
+      functionName,
+      args: [amount],
+    })
   }
+
+  const buttonDisabled = isPending || isConfirming
+  const buttonText = isSuccess
+    ? 'Swap complete!'
+    : isConfirming
+      ? 'Swapping...'
+      : isPending
+        ? 'Confirm in wallet...'
+        : 'Preview swap'
 
   return (
     <div className="section" id="exchange">
@@ -85,8 +106,8 @@ export function SwapCard({ wallet, onOpenModal }) {
         </div>
 
         <div className="rate-bar">
-          <span>Rate <span className="demo-tag">demo</span></span>
-          <span className="rate-val">1 {payToken} = {rate.toFixed(4)} {receiveToken}</span>
+          <span>Rate</span>
+          <span className="rate-val">1 {payToken} = {displayRate.toFixed(4)} {receiveToken}</span>
         </div>
         <div className="rate-bar" style={{ borderTop: 'none' }}>
           <span>Protocol fee</span><span className="rate-val">0.05% · ~${(amtIn * 0.0005).toFixed(2)}</span>
@@ -101,18 +122,24 @@ export function SwapCard({ wallet, onOpenModal }) {
           <button className="swap-btn warn" onClick={wallet.switchChain}>Switch to Arc Testnet</button>
         ) : (
           <button
-            className={`swap-btn ${execState === 'done' ? 'done' : ''} ${execState === 'pending' ? 'pending' : ''}`}
+            className={`swap-btn ${isSuccess ? 'done' : ''} ${buttonDisabled ? 'pending' : ''}`}
             onClick={executeSwap}
-            disabled={execState !== 'idle'}
+            disabled={buttonDisabled}
           >
-            {execState === 'pending' && 'Confirm in wallet...'}
-            {execState === 'done' && 'Swap executed · 0.38s (demo)'}
-            {execState === 'idle' && 'Preview swap'}
+            {buttonText}
           </button>
         )}
-        <p className="demo-note">
-          On-chain execution isn't wired up yet — this shows the flow. Real swaps need the FXSwap contract deployed on Arc Testnet.
-        </p>
+
+        {hash && (
+          <a
+            className="tx-link"
+            href={`https://testnet.arcscan.app/tx/${hash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on explorer
+          </a>
+        )}
       </div>
     </div>
   )
