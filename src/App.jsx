@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { WagmiProvider, useAccount, useWriteContract, useBalance } from 'wagmi'
+import { WagmiProvider, useAccount, useConnect, useDisconnect, useWriteContract, useBalance } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RainbowKitProvider, ConnectButton } from '@rainbow-me/rainbowkit'
-import '@rainbow-me/rainbowkit/styles.css'
 import { parseUnits } from 'viem'
 import { config, ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI } from './config'
 
@@ -12,12 +10,17 @@ const TOKEN_IN = '0x0000000000000000000000000000000000000001'
 const TOKEN_OUT = '0x0000000000000000000000000000000000000002'
 
 function AnchorApp() {
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
+  const { connect, connectors } = useConnect()
+  const { disconnect } = useDisconnect()
+
   const [amountIn, setAmountIn] = useState('')
   const [rate] = useState('0.9247')
 
   const { data: balanceData } = useBalance({ address })
   const { writeContract, isPending, isSuccess, error } = useWriteContract()
+
+  const [showWallets, setShowWallets] = useState(false)
 
   function handleSwap() {
     if (!amountIn) return
@@ -40,7 +43,48 @@ function AnchorApp() {
           <span className="anchor-logo">Anchor<span className="anchor-accent">FX</span></span>
           <span className="anchor-badge">Built on Arc Network</span>
         </div>
-        <ConnectButton />
+        <div style={{ position: 'relative' }}>
+          {isConnected ? (
+            <div className="anchor-wallet-pill">
+              <span className="anchor-dot" />
+              <span className="anchor-addr">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+              <button className="anchor-disconnect" onClick={() => disconnect()}>✕</button>
+            </div>
+          ) : (
+            <button className="anchor-btn-primary" onClick={() => setShowWallets(true)}>
+              Connect Wallet
+            </button>
+          )}
+
+          {showWallets && !isConnected && (
+            <div className="anchor-modal">
+              <div className="anchor-modal-backdrop" onClick={() => setShowWallets(false)} />
+              <div className="anchor-modal-card">
+                <div className="anchor-modal-header">
+                  <h3>Connect Wallet</h3>
+                  <button className="anchor-modal-close" onClick={() => setShowWallets(false)}>✕</button>
+                </div>
+                <div className="anchor-modal-list">
+                  {connectors.map(c => (
+                    <button
+                      key={c.id}
+                      className="anchor-wallet-option"
+                      onClick={() => { connect({ connector: c, chainId: 5042002 }); setShowWallets(false) }}
+                    >
+                      <span className="anchor-wallet-icon">{c.icon}</span>
+                      <div>
+                        <div className="anchor-wallet-name">{c.name}</div>
+                        <div className="anchor-wallet-desc">
+                          {c.id === 'injected' ? 'Browser wallet' : c.id === 'coinbaseWallet' ? 'Coinbase' : 'QR / Mobile'}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="anchor-main">
@@ -124,9 +168,7 @@ export default function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
-          <AnchorApp />
-        </RainbowKitProvider>
+        <AnchorApp />
       </QueryClientProvider>
     </WagmiProvider>
   )
