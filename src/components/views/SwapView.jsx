@@ -9,11 +9,22 @@ const ERC20_ABI = [
   { type: 'function', name: 'allowance', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
 ]
 
+function fetchEURRate() {
+  return fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
+    .then(r => r.json())
+    .then(d => (1 / parseFloat(d.price)).toFixed(4))
+    .catch(() => '0.9247')
+}
+
 export default function SwapView() {
   const { address } = useAccount()
   const { notify } = useAppState()
   const [amountIn, setAmountIn] = useState('')
-  const [rate] = useState('0.9247')
+  const [rate, setRate] = useState('0.9247')
+
+  useEffect(() => {
+    fetchEURRate().then(setRate)
+  }, [])
 
   const { data: balanceData } = useBalance({ address })
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()

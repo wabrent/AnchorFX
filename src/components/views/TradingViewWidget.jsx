@@ -1,21 +1,22 @@
 import { memo, useEffect, useRef } from 'react'
+import { useAppState } from '../../context/useAppState'
 
 function TradingViewWidget() {
+  const { selectedPair } = useAppState()
   const container = useRef(null)
-  const initialized = useRef(false)
+  const widgetRef = useRef(null)
 
   useEffect(() => {
-    if (!container.current || initialized.current) return
-    initialized.current = true
+    if (!container.current) return
 
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
     script.async = true
     script.onload = () => {
       if (typeof TradingView !== 'undefined' && container.current) {
-        new TradingView.widget({
+        widgetRef.current = new TradingView.widget({
           container_id: container.current.id,
-          symbol: 'BINANCE:BTCUSDT',
+          symbol: selectedPair || 'BINANCE:BTCUSDT',
           interval: '60',
           theme: 'dark',
           style: '1',
@@ -40,7 +41,18 @@ function TradingViewWidget() {
       }
     }
     document.head.appendChild(script)
+
+    return () => {
+      const el = container.current
+      if (el) el.innerHTML = ''
+    }
   }, [])
+
+  useEffect(() => {
+    if (widgetRef.current && selectedPair) {
+      widgetRef.current.setSymbol(selectedPair)
+    }
+  }, [selectedPair])
 
   return <div id="tv-chart" ref={container} className="tv-container" />
 }

@@ -6,6 +6,7 @@ const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
   const [activeTab, setActiveTab] = useState('Swap')
+  const [selectedPair, setSelectedPair] = useState(null)
   const [notifications, setNotifications] = useState([])
   const notifId = useRef(0)
 
@@ -21,7 +22,7 @@ export function AppProvider({ children }) {
   }, [])
 
   return (
-    <AppContext.Provider value={{ activeTab, setActiveTab, tabs: TABS, notifications, notify, dismissNotification }}>
+    <AppContext.Provider value={{ activeTab, setActiveTab, selectedPair, setSelectedPair, tabs: TABS, notifications, notify, dismissNotification }}>
       {children}
     </AppContext.Provider>
   )

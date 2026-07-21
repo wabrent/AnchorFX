@@ -10,8 +10,17 @@ const SYMBOLS = [
   { pair: 'OP/USD', binance: 'OPUSDT' },
 ]
 
+const BINANCE_MAP = {
+  'BTC/USD': 'BINANCE:BTCUSDT',
+  'ETH/USD': 'BINANCE:ETHUSDT',
+  'SOL/USD': 'BINANCE:SOLUSDT',
+  'ARB/USD': 'BINANCE:ARBUSDT',
+  'OP/USD': 'BINANCE:OPUSDT',
+  'USDC/EURC': null,
+}
+
 export default function MarketsView() {
-  const { setActiveTab } = useAppState()
+  const { setActiveTab, setSelectedPair } = useAppState()
   const [prices, setPrices] = useState({})
 
   useEffect(() => {
@@ -62,7 +71,10 @@ export default function MarketsView() {
               const p = s.binance ? prices[s.binance] : { price: 0.9247, change: 0.12, volume: '12.4M' }
               if (!p) return null
               return (
-                <tr key={s.pair} className="mkt-row" onClick={() => setActiveTab('Swap')}>
+                <tr key={s.pair} className="mkt-row" onClick={() => {
+                  if (BINANCE_MAP[s.pair]) setSelectedPair(BINANCE_MAP[s.pair])
+                  setActiveTab('Swap')
+                }}>
                   <td className="mkt-pair">{s.pair}</td>
                   <td className="mkt-price">
                     ${p.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: p.price < 10 ? 6 : 2 })}
