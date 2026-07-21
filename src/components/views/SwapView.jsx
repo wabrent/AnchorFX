@@ -29,8 +29,20 @@ export default function SwapView() {
   const needsApprove = allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
 
   useEffect(() => {
-    if (isSuccess) refetchAllowance()
-  }, [isSuccess, refetchAllowance])
+    if (isSuccess) {
+      refetchAllowance()
+      const trade = {
+        time: new Date().toLocaleString(),
+        type: 'USDC → EURC',
+        amount: amountIn,
+        status: 'Confirmed',
+        hash: writeResult,
+      }
+      const existing = JSON.parse(localStorage.getItem('anchorfx_trades') || '[]')
+      existing.unshift(trade)
+      localStorage.setItem('anchorfx_trades', JSON.stringify(existing))
+    }
+  }, [isSuccess, refetchAllowance, amountIn, writeResult])
 
   function handleApprove() {
     if (!amountIn || !address) return

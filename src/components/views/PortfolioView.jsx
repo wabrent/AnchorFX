@@ -1,76 +1,64 @@
 import { useAccount, useBalance } from 'wagmi'
-import { MOCK_POSITIONS } from '../../utils/mockData'
+import { EURC_ADDRESS } from '../../config'
 
 export default function PortfolioView() {
   const { address } = useAccount()
-  const { data: balance } = useBalance({ address })
-  const equity = balance ? parseFloat(balance.formatted) : 0
-  const pnl = 1142.50
-  const openPositions = MOCK_POSITIONS.length
+  const { data: usdcBalance } = useBalance({ address })
+  const { data: eurcBalance } = useBalance({ address, token: EURC_ADDRESS })
+
+  const usdc = usdcBalance ? parseFloat(usdcBalance.formatted) : 0
+  const eurc = eurcBalance ? parseFloat(eurcBalance.formatted) : 0
 
   return (
     <div className="view-section">
       <div className="view-head">
         <h2>Portfolio</h2>
-        <span className="view-sub">Balances & positions</span>
+        <span className="view-sub">Real balances from Arc Network</span>
       </div>
 
-      <div className="pf-stats">
-        <div className="pf-card">
-          <div className="pf-card-label">Total Equity</div>
-          <div className="pf-card-val">${equity.toFixed(2)}</div>
-        </div>
-        <div className="pf-card">
-          <div className="pf-card-label">Unrealized PnL</div>
-          <div className={`pf-card-val ${pnl >= 0 ? 'up' : 'down'}`}>${pnl.toFixed(2)}</div>
-        </div>
-        <div className="pf-card">
-          <div className="pf-card-label">Open Positions</div>
-          <div className="pf-card-val">{openPositions}</div>
-        </div>
-        <div className="pf-card">
-          <div className="pf-card-label">Available Margin</div>
-          <div className="pf-card-val">${equity.toFixed(2)}</div>
-        </div>
-      </div>
-
-      {address && (
-        <div className="pf-balance-box">
-          <span className="pf-balance-label">Connected Wallet Balance</span>
-          <span className="pf-balance-val">{equity.toFixed(4)} {balance?.symbol || 'ARC'}</span>
-        </div>
-      )}
-
-      {MOCK_POSITIONS.length > 0 && (
+      {address ? (
         <>
-          <h3 className="pf-section-title">Active Positions</h3>
-          <table className="mkt-table">
-            <thead>
-              <tr>
-                <th>Pair</th>
-                <th>Side</th>
-                <th>Size</th>
-                <th>Entry</th>
-                <th>Mark</th>
-                <th>PnL</th>
-                <th>Leverage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_POSITIONS.map((p, i) => (
-                <tr key={i}>
-                  <td className="mkt-pair">{p.pair}</td>
-                  <td><span className={`pos-badge ${p.side.toLowerCase()}`}>{p.side}</span></td>
-                  <td>{p.size}</td>
-                  <td>${p.entry.toLocaleString()}</td>
-                  <td>${p.mark.toLocaleString()}</td>
-                  <td className={p.pnl >= 0 ? 'up' : 'down'}>${p.pnl.toFixed(2)}</td>
-                  <td>{p.leverage}x</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="pf-stats">
+            <div className="pf-card">
+              <div className="pf-card-label">USDC Balance</div>
+              <div className="pf-card-val">{usdc.toFixed(4)}</div>
+            </div>
+            <div className="pf-card">
+              <div className="pf-card-label">EURC Balance</div>
+              <div className="pf-card-val">{eurc.toFixed(4)}</div>
+            </div>
+            <div className="pf-card">
+              <div className="pf-card-label">Network</div>
+              <div className="pf-card-val" style={{ fontSize: 14 }}>Arc Testnet</div>
+            </div>
+            <div className="pf-card">
+              <div className="pf-card-label">Chain ID</div>
+              <div className="pf-card-val" style={{ fontSize: 14 }}>5042002</div>
+            </div>
+          </div>
+
+          <div className="pf-balance-box">
+            <span className="pf-balance-label">Connected Wallet</span>
+            <span className="pf-balance-val" style={{ fontSize: 13, fontFamily: 'DM Mono, monospace' }}>{address}</span>
+          </div>
+
+          <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--s1)', borderRadius: 12, border: '0.5px solid var(--border)', textAlign: 'center' }}>
+            <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>View all transactions on ArcScan</p>
+            <a
+              href={`https://testnet.arcscan.app/address/${address}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mkt-trade-btn"
+              style={{ display: 'inline-block', padding: '8px 20px' }}
+            >
+              Open ArcScan ↗
+            </a>
+          </div>
         </>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text3)' }}>
+          <p style={{ fontSize: 15 }}>Connect your wallet to view portfolio</p>
+        </div>
       )}
     </div>
   )
