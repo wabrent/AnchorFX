@@ -1,10 +1,24 @@
 import { memo, useEffect, useRef } from 'react'
 import { useAppState } from '../../context/useAppState'
 
+const SYMBOL_LABEL = {
+  'FX:EURUSD': 'EUR / USD',
+  'BINANCE:BTCUSDT': 'BTC / USD',
+  'BINANCE:ETHUSDT': 'ETH / USD',
+  'BINANCE:SOLUSDT': 'SOL / USD',
+  'BINANCE:ARBUSDT': 'ARB / USD',
+  'BINANCE:OPUSDT': 'OP / USD',
+}
+
+function labelFor(symbol) {
+  return SYMBOL_LABEL[symbol] || (symbol ? symbol.replace('BINANCE:', '').replace('USDT', '/ USD').replace('_', ' ') : '')
+}
+
 function TradingViewWidget() {
   const { selectedPair } = useAppState()
   const container = useRef(null)
   const widgetRef = useRef(null)
+  const symbol = selectedPair || 'FX:EURUSD'
 
   useEffect(() => {
     if (!container.current) return
@@ -16,27 +30,30 @@ function TradingViewWidget() {
       if (typeof TradingView !== 'undefined' && container.current) {
         widgetRef.current = new TradingView.widget({
           container_id: container.current.id,
-          symbol: selectedPair || 'BINANCE:BTCUSDT',
+          symbol,
           interval: '60',
+          timezone: 'Etc/UTC',
           theme: 'dark',
-          style: '1',
+          style: '3',
           locale: 'en',
-          toolbar_bg: '#030304',
+          toolbar_bg: 'transparent',
           enable_publishing: false,
-          hide_side_toolbar: true,
           hide_top_toolbar: false,
+          hide_side_toolbar: true,
           allow_symbol_change: true,
           save_image: false,
-          studies: ['STD;SMA'],
           autosize: true,
-          time_frames: [
-            { text: '1m', resolution: '1' },
-            { text: '5m', resolution: '5' },
-            { text: '15m', resolution: '15' },
-            { text: '1h', resolution: '60' },
-            { text: '4h', resolution: '240' },
-            { text: '1D', resolution: '1D' },
-          ],
+          studies: ['STD;SMA'],
+          overrides: {
+            'paneProperties.background': '#0B0E14',
+            'paneProperties.backgroundType': 'solid',
+            'paneProperties.vertGridProperties.color': 'rgba(255, 255, 255, 0.03)',
+            'paneProperties.horzGridProperties.color': 'rgba(255, 255, 255, 0.03)',
+            'mainSeriesProperties.candleStyle.upColor': '#10B981',
+            'mainSeriesProperties.candleStyle.downColor': '#EF4444',
+            'mainSeriesProperties.candleStyle.wickUpColor': '#10B981',
+            'mainSeriesProperties.candleStyle.wickDownColor': '#EF4444',
+          },
         })
       }
     }
@@ -49,12 +66,23 @@ function TradingViewWidget() {
   }, [])
 
   useEffect(() => {
-    if (widgetRef.current && selectedPair) {
+    if (widgetRef.current && selectedPair && selectedPair !== symbol) {
       widgetRef.current.setSymbol(selectedPair)
     }
   }, [selectedPair])
 
-  return <div id="tv-chart" ref={container} className="tv-container" />
+  return (
+    <div className="tv-wrapper">
+      <div className="tv-header">
+        <div className="tv-header-left">
+          <span className="tv-dot" />
+          <span className="tv-label">Live Market Chart</span>
+        </div>
+        <span className="tv-pair-label">{labelFor(symbol)} · 1H</span>
+      </div>
+      <div id="tv-chart" ref={container} className="tv-container" />
+    </div>
+  )
 }
 
 export default memo(TradingViewWidget)
