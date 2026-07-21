@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { WagmiProvider, useAccount, useConnect, useDisconnect, useWriteContract, useBalance } from 'wagmi'
+import { WagmiProvider, useAccount, useWriteContract, useBalance } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RainbowKitProvider, ConnectButton } from '@rainbow-me/rainbowkit'
+import '@rainbow-me/rainbowkit/styles.css'
 import { parseUnits } from 'viem'
 import { config, ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI } from './config'
 
@@ -10,10 +12,7 @@ const TOKEN_IN = '0x0000000000000000000000000000000000000001'
 const TOKEN_OUT = '0x0000000000000000000000000000000000000002'
 
 function AnchorApp() {
-  const { address, isConnected } = useAccount()
-  const { connect, connectors } = useConnect()
-  const { disconnect } = useDisconnect()
-
+  const { address } = useAccount()
   const [amountIn, setAmountIn] = useState('')
   const [rate] = useState('0.9247')
 
@@ -41,17 +40,7 @@ function AnchorApp() {
           <span className="anchor-logo">Anchor<span className="anchor-accent">FX</span></span>
           <span className="anchor-badge">Built on Arc Network</span>
         </div>
-        <div>
-          {isConnected ? (
-            <button className="anchor-btn-ghost" onClick={() => disconnect()}>
-              {address?.slice(0, 6)}...{address?.slice(-4)}
-            </button>
-          ) : (
-            <button className="anchor-btn-primary" onClick={() => connect({ connector: connectors[0] })}>
-              Connect Wallet
-            </button>
-          )}
-        </div>
+        <ConnectButton />
       </header>
 
       <main className="anchor-main">
@@ -91,7 +80,7 @@ function AnchorApp() {
             <button
               className="anchor-swap-btn"
               onClick={handleSwap}
-              disabled={!isConnected || isPending || !amountIn}
+              disabled={!address || isPending || !amountIn}
             >
               {isPending ? 'Executing Transaction on Arc...' : 'Execute On-Chain FX Swap'}
             </button>
@@ -135,7 +124,9 @@ export default function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <AnchorApp />
+        <RainbowKitProvider>
+          <AnchorApp />
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )
