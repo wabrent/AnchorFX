@@ -48,6 +48,13 @@ body::before {
 }
 
 a { color: inherit; text-decoration: none; }
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
 button { font-family: inherit; }
 
 .anchor-page { min-height: 100vh; background: transparent; color: var(--text); }

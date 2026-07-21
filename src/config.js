@@ -39,7 +39,7 @@ const connectors = [
 export const FXSWAP_ADDRESS = '0x...' // TODO: replace after deployment
 
 // AnchorFXRouter — deploy contracts/AnchorFXRouter.sol then paste the address here
-export const ANCHOR_FX_ROUTER_ADDRESS = '0x1234567890123456789012345678901234567890' // TODO: replace
+export const ANCHOR_FX_ROUTER_ADDRESS = '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8'
 
 export const ANCHOR_FX_ROUTER_ABI = [
   {

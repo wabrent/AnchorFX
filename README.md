@@ -11,7 +11,7 @@ AnchorFX is a decentralized foreign exchange (FX) and liquidity protocol built o
 
 ## Deployed Contracts
 
-- **AnchorFXRouter (Arc Testnet):** `[Insert address after deployment]`
+- **AnchorFXRouter (Arc Testnet):** `0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8`
 - **Block Explorer Verification:** https://testnet.arcscan.app/
 
 ## Live Demo & Links
