@@ -1,5 +1,7 @@
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import '@rainbow-me/rainbowkit/styles.css'
 import { config } from './config'
 import { AppProvider, useAppState } from './context/useAppState'
 import Navbar from './components/Navbar'
@@ -40,9 +42,11 @@ export default function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <AppProvider>
-          <Page />
-        </AppProvider>
+        <RainbowKitProvider>
+          <AppProvider>
+            <Page />
+          </AppProvider>
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )

@@ -1,5 +1,5 @@
-import { createConfig, http } from 'wagmi'
-import { injected, coinbaseWallet, walletConnect } from 'wagmi/connectors'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { http } from 'wagmi'
 
 export const arcTestnet = {
   id: 5042002,
@@ -37,17 +37,10 @@ export const ANCHOR_FX_ROUTER_ABI = [
 
 const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 
-const connectors = [
-  injected(),
-  coinbaseWallet({ appName: 'AnchorFX' }),
-  ...(walletConnectProjectId
-    ? [walletConnect({ projectId: walletConnectProjectId, showQrModal: true })]
-    : []),
-]
-
-export const config = createConfig({
+export const config = getDefaultConfig({
+  appName: 'AnchorFX',
+  projectId: walletConnectProjectId || 'YOUR_PROJECT_ID',
   chains: [arcTestnet],
-  connectors,
   transports: {
     [arcTestnet.id]: http(),
   },
