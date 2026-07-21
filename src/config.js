@@ -29,7 +29,7 @@ const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 
 const connectors = [
   injected(), // MetaMask and any other browser-injected wallet
-  coinbaseWallet({ appName: 'ArcFX' }),
+  coinbaseWallet({ appName: 'AnchorFX' }),
   ...(walletConnectProjectId
     ? [walletConnect({ projectId: walletConnectProjectId, showQrModal: true })]
     : []),
@@ -38,10 +38,10 @@ const connectors = [
 // FXSwap contract — deploy via contracts/FXSwap.sol then paste the address here
 export const FXSWAP_ADDRESS = '0x...' // TODO: replace after deployment
 
-// ArcFXRouter — deploy contracts/ArcFXRouter.sol then paste the address here
-export const ARC_FX_ROUTER_ADDRESS = '0x1234567890123456789012345678901234567890' // TODO: replace
+// AnchorFXRouter — deploy contracts/AnchorFXRouter.sol then paste the address here
+export const ANCHOR_FX_ROUTER_ADDRESS = '0x1234567890123456789012345678901234567890' // TODO: replace
 
-export const ARC_FX_ROUTER_ABI = [
+export const ANCHOR_FX_ROUTER_ABI = [
   {
     type: 'function',
     name: 'swapFX',

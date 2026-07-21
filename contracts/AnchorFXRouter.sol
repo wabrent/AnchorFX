@@ -7,11 +7,15 @@ interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
 }
 
-contract ArcFXRouter {
+/**
+ * @title AnchorFXRouter
+ * @dev Institutional FX Swap Router for Arc Network
+ */
+contract AnchorFXRouter {
     address public owner;
-    uint256 public feeBps = 10; // 0.1%
+    uint256 public feeBps = 10; // 0.1% fee
 
-    event FXSwapped(
+    event AnchorSwapped(
         address indexed user,
         address indexed tokenIn,
         address indexed tokenOut,
@@ -20,10 +24,10 @@ contract ArcFXRouter {
         uint256 timestamp
     );
 
-    event LiquidityAdded(address indexed provider, address indexed token, uint256 amount);
+    event AnchorLiquidityAdded(address indexed provider, address indexed token, uint256 amount);
 
     modifier onlyOwner() {
-        require(msg.sender == owner, "ArcFX: Not authorized");
+        require(msg.sender == owner, "AnchorFX: Not authorized");
         _;
     }
 
@@ -38,39 +42,34 @@ contract ArcFXRouter {
         uint256 minAmountOut,
         uint256 exchangeRate
     ) external returns (uint256 amountOut) {
-        require(amountIn > 0, "ArcFX: Zero input amount");
-        require(tokenIn != tokenOut, "ArcFX: Identical tokens");
+        require(amountIn > 0, "AnchorFX: Zero input amount");
+        require(tokenIn != tokenOut, "AnchorFX: Identical tokens");
 
         uint256 fee = (amountIn * feeBps) / 10000;
         uint256 netInput = amountIn - fee;
 
         amountOut = (netInput * exchangeRate) / 1e18;
-        require(amountOut >= minAmountOut, "ArcFX: High slippage");
+        require(amountOut >= minAmountOut, "AnchorFX: Slippage tolerance exceeded");
 
         require(
             IERC20(tokenIn).transferFrom(msg.sender, address(this), amountIn),
-            "ArcFX: TransferIn failed"
+            "AnchorFX: TransferIn failed"
         );
 
         require(
             IERC20(tokenOut).transfer(msg.sender, amountOut),
-            "ArcFX: TransferOut failed"
+            "AnchorFX: TransferOut failed"
         );
 
-        emit FXSwapped(msg.sender, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
+        emit AnchorSwapped(msg.sender, tokenIn, tokenOut, amountIn, amountOut, block.timestamp);
     }
 
     function addLiquidity(address token, uint256 amount) external {
-        require(amount > 0, "ArcFX: Zero amount");
+        require(amount > 0, "AnchorFX: Zero amount");
         require(
             IERC20(token).transferFrom(msg.sender, address(this), amount),
-            "ArcFX: Liquidity deposit failed"
+            "AnchorFX: Deposit failed"
         );
-        emit LiquidityAdded(msg.sender, token, amount);
-    }
-
-    function setFee(uint256 _feeBps) external onlyOwner {
-        require(_feeBps <= 100, "ArcFX: Fee too high");
-        feeBps = _feeBps;
+        emit AnchorLiquidityAdded(msg.sender, token, amount);
     }
 }

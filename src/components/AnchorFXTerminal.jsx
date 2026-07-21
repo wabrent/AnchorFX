@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useAccount, useConnect, useDisconnect, useWriteContract, useBalance } from 'wagmi'
 import { parseUnits } from 'viem'
-import { ARC_FX_ROUTER_ADDRESS, ARC_FX_ROUTER_ABI } from '../config'
+import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI } from '../config'
 
-const TOKEN_IN_USDC = '0x0000000000000000000000000000000000000001'
-const TOKEN_OUT_EURC = '0x0000000000000000000000000000000000000002'
+const USDC_ADDRESS = '0x0000000000000000000000000000000000000001'
+const EURC_ADDRESS = '0x0000000000000000000000000000000000000002'
 
-export default function ArcFXTerminal() {
+export default function AnchorFXTerminal() {
   const { address, isConnected } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
@@ -25,10 +25,10 @@ export default function ArcFXTerminal() {
     const minOut = (parsedAmount * parsedRate) / BigInt(1e18)
 
     writeContract({
-      address: ARC_FX_ROUTER_ADDRESS,
-      abi: ARC_FX_ROUTER_ABI,
+      address: ANCHOR_FX_ROUTER_ADDRESS,
+      abi: ANCHOR_FX_ROUTER_ABI,
       functionName: 'swapFX',
-      args: [TOKEN_IN_USDC, TOKEN_OUT_EURC, parsedAmount, minOut, parsedRate],
+      args: [USDC_ADDRESS, EURC_ADDRESS, parsedAmount, minOut, parsedRate],
     })
   }
 
@@ -36,13 +36,20 @@ export default function ArcFXTerminal() {
     <div className="section" id="terminal">
       <div className="section-center-head">
         <div className="section-tag">Terminal</div>
-        <div className="section-title">ARC-FX Terminal</div>
+        <div className="section-title">
+          Anchor<span className="anchor-title-accent">FX</span>
+        </div>
         <div className="section-sub">Execute on-chain FX swaps directly</div>
       </div>
 
       <div className="terminal-card">
         <div className="terminal-header">
-          <h3 className="terminal-title">ARC-FX Terminal</h3>
+          <div>
+            <h3 className="terminal-title">
+              Anchor<span className="anchor-title-accent">FX</span>
+            </h3>
+            <p className="terminal-powered">Built on Arc Network</p>
+          </div>
           {isConnected ? (
             <button className="terminal-conn-btn disconnect" onClick={() => disconnect()}>
               {address?.slice(0, 6)}...{address?.slice(-4)}
@@ -55,14 +62,17 @@ export default function ArcFXTerminal() {
         </div>
 
         <div className="terminal-balance">
-          <span className="terminal-balance-label">Arc Network Balance</span>
+          <div className="terminal-balance-header">
+            <span className="terminal-balance-label">Arc Network Native Balance</span>
+            <span className="terminal-balance-badge">Arc Testnet</span>
+          </div>
           <p className="terminal-balance-value">
             {balanceData ? `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : '0.00 ARC'}
           </p>
         </div>
 
         <div className="terminal-field">
-          <label className="terminal-label">Pay (USDC)</label>
+          <label className="terminal-label">Pay Asset (USDC)</label>
           <input
             className="terminal-input"
             type="number"
@@ -73,7 +83,7 @@ export default function ArcFXTerminal() {
         </div>
 
         <div className="terminal-rate">
-          <span>Target Rate (EUR/USD):</span>
+          <span>Oracle Rate (EUR/USD):</span>
           <span className="terminal-rate-val">{rate}</span>
         </div>
 
@@ -82,12 +92,12 @@ export default function ArcFXTerminal() {
           onClick={handleExecuteSwap}
           disabled={!isConnected || isPending || !amountIn}
         >
-          {isPending ? 'Executing Transaction on Arc...' : 'Execute On-Chain FX Swap'}
+          {isPending ? 'Executing On-Chain Swap...' : 'Swap FX on Arc'}
         </button>
 
         {isSuccess && (
           <div className="terminal-msg success">
-            Transaction successfully confirmed on Arc Network!
+            Transaction confirmed on Arc Network!
           </div>
         )}
 
