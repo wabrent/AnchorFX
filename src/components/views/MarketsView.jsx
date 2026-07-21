@@ -18,26 +18,25 @@ export default function MarketsView() {
     const symbols = SYMBOLS.filter(s => s.binance).map(s => `"${s.binance}"`).join(',')
     if (!symbols) return
 
-    fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=[${symbols}]`)
-      .then(r => r.json())
-      .then(data => {
-        const map = {}
-        data.forEach(t => { map[t.symbol] = { price: parseFloat(t.lastPrice), change: parseFloat(t.priceChangePercent), volume: (parseFloat(t.quoteVolume) / 1e6).toFixed(1) + 'M' } })
-        setPrices(map)
-      })
-      .catch(() => {})
-
-    const interval = setInterval(() => {
+    const fetchPrices = () => {
       fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=[${symbols}]`)
         .then(r => r.json())
         .then(data => {
           const map = {}
-          data.forEach(t => { map[t.symbol] = { price: parseFloat(t.lastPrice), change: parseFloat(t.priceChangePercent), volume: (parseFloat(t.quoteVolume) / 1e6).toFixed(1) + 'M' } })
+          data.forEach(t => {
+            map[t.symbol] = {
+              price: parseFloat(t.lastPrice),
+              change: parseFloat(t.priceChangePercent),
+              volume: (parseFloat(t.quoteVolume) / 1e6).toFixed(1) + 'M'
+            }
+          })
           setPrices(map)
         })
         .catch(() => {})
-    }, 30000)
+    }
 
+    fetchPrices()
+    const interval = setInterval(fetchPrices, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -63,13 +62,17 @@ export default function MarketsView() {
               const p = s.binance ? prices[s.binance] : { price: 0.9247, change: 0.12, volume: '12.4M' }
               if (!p) return null
               return (
-                <tr key={s.pair}>
+                <tr key={s.pair} className="mkt-row" onClick={() => setActiveTab('Swap')}>
                   <td className="mkt-pair">{s.pair}</td>
-                  <td className="mkt-price">${p.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: p.price < 10 ? 6 : 2 })}</td>
-                  <td className={`mkt-chg ${p.change >= 0 ? 'up' : 'down'}`}>{p.change >= 0 ? '+' : ''}{p.change.toFixed(2)}%</td>
+                  <td className="mkt-price">
+                    ${p.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: p.price < 10 ? 6 : 2 })}
+                  </td>
+                  <td className={`mkt-chg ${p.change >= 0 ? 'up' : 'down'}`}>
+                    {p.change >= 0 ? '+' : ''}{p.change.toFixed(2)}%
+                  </td>
                   <td className="mkt-vol">{p.volume}</td>
                   <td>
-                    <button className="mkt-trade-btn" onClick={() => setActiveTab('Swap')}>Trade</button>
+                    <span className="mkt-trade-btn">Trade →</span>
                   </td>
                 </tr>
               )
