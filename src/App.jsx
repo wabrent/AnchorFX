@@ -10,6 +10,7 @@ import { Features } from './components/Features'
 import { Subscriptions } from './components/Subscriptions'
 import { Footer } from './components/Footer'
 import { WalletModal } from './components/WalletModal'
+import ArcFXTerminal from './components/ArcFXTerminal'
 
 const queryClient = new QueryClient()
 
@@ -25,6 +26,7 @@ function Site() {
       <Hero />
       <SwapCard wallet={wallet} onOpenModal={() => setModalOpen(true)} />
       <Features />
+      <ArcFXTerminal />
       <Subscriptions wallet={wallet} onOpenModal={() => setModalOpen(true)} />
       <Footer />
       {modalOpen && <WalletModal wallet={wallet} onClose={() => setModalOpen(false)} />}

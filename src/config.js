@@ -38,6 +38,35 @@ const connectors = [
 // FXSwap contract — deploy via contracts/FXSwap.sol then paste the address here
 export const FXSWAP_ADDRESS = '0x...' // TODO: replace after deployment
 
+// ArcFXRouter — deploy contracts/ArcFXRouter.sol then paste the address here
+export const ARC_FX_ROUTER_ADDRESS = '0x1234567890123456789012345678901234567890' // TODO: replace
+
+export const ARC_FX_ROUTER_ABI = [
+  {
+    type: 'function',
+    name: 'swapFX',
+    inputs: [
+      { name: 'tokenIn', type: 'address' },
+      { name: 'tokenOut', type: 'address' },
+      { name: 'amountIn', type: 'uint256' },
+      { name: 'minAmountOut', type: 'uint256' },
+      { name: 'exchangeRate', type: 'uint256' },
+    ],
+    outputs: [{ name: 'amountOut', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'addLiquidity',
+    inputs: [
+      { name: 'token', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+    stateMutability: 'nonpayable',
+  },
+]
+
 export const FXSWAP_ABI = [
   {
     name: 'swapUsdcToEurc',
