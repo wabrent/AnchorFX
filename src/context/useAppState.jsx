@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, useRef } from 'react'
 
-const TABS = ['Markets', 'Swap', 'Portfolio', 'History']
+const TABS = ['Markets', 'Swap', 'Bridge', 'Orders', 'Vaults', 'Payments', 'AI Trading', 'Clearing', 'Portfolio', 'History']
 
 const AppContext = createContext(null)
 
