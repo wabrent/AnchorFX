@@ -1,10 +1,10 @@
 import { useAccount, useBalance } from 'wagmi'
-import { EURC_ADDRESS } from '../../config'
+import { EURC_ADDRESS, USDC_ADDRESS } from '../../config'
 
 export default function PortfolioView() {
   const { address } = useAccount()
-  const { data: usdcBalance } = useBalance({ address })
-  const { data: eurcBalance } = useBalance({ address, token: EURC_ADDRESS })
+  const { data: usdcBalance } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
+  const { data: eurcBalance } = useBalance({ address, token: EURC_ADDRESS, chainId: 5042002 })
 
   const usdc = usdcBalance ? parseFloat(usdcBalance.formatted) : 0
   const eurc = eurcBalance ? parseFloat(eurcBalance.formatted) : 0
@@ -13,7 +13,7 @@ export default function PortfolioView() {
     <div className="view-section">
       <div className="view-head">
         <h2>Portfolio</h2>
-        <span className="view-sub">Real balances from Arc Network</span>
+        <span className="view-sub">Real balances from Arc Testnet</span>
       </div>
 
       {address ? (
@@ -21,11 +21,11 @@ export default function PortfolioView() {
           <div className="pf-stats">
             <div className="pf-card">
               <div className="pf-card-label">USDC Balance</div>
-              <div className="pf-card-val">{usdc.toFixed(4)}</div>
+              <div className="pf-card-val">{usdc.toFixed(2)}</div>
             </div>
             <div className="pf-card">
               <div className="pf-card-label">EURC Balance</div>
-              <div className="pf-card-val">{eurc.toFixed(4)}</div>
+              <div className="pf-card-val">{eurc.toFixed(2)}</div>
             </div>
             <div className="pf-card">
               <div className="pf-card-label">Network</div>
@@ -51,7 +51,7 @@ export default function PortfolioView() {
               className="mkt-trade-btn"
               style={{ display: 'inline-block', padding: '8px 20px' }}
             >
-              Open ArcScan ↗
+              Open ArcScan
             </a>
           </div>
         </>

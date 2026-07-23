@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract, useBalance, useReadContract } from 'wagmi'
-import { parseUnits } from 'viem'
+import { parseUnits, maxUint256 } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
 import { useAppState } from '../../context/useAppState'
 
@@ -21,12 +21,13 @@ export default function SwapView() {
   const { notify } = useAppState()
   const [amountIn, setAmountIn] = useState('')
   const [rate, setRate] = useState('0.9247')
+  const [approved, setApproved] = useState(false)
 
   useEffect(() => {
     fetchEURRate().then(setRate)
   }, [])
 
-  const { data: balanceData } = useBalance({ address })
+  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
@@ -37,7 +38,7 @@ export default function SwapView() {
   })
 
   const parsedAmount = amountIn ? parseUnits(amountIn, 6) : 0n
-  const needsApprove = allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
+  const needsApprove = !approved && allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
 
   useEffect(() => {
     if (isSuccess) {
@@ -52,8 +53,16 @@ export default function SwapView() {
       const existing = JSON.parse(localStorage.getItem('anchorfx_trades') || '[]')
       existing.unshift(trade)
       localStorage.setItem('anchorfx_trades', JSON.stringify(existing))
+      setAmountIn('')
+      setApproved(false)
     }
-  }, [isSuccess, refetchAllowance, amountIn, writeResult])
+  }, [isSuccess])
+
+  useEffect(() => {
+    if (isSuccess && approved) {
+      notify('Swap Confirmed', 'Transaction confirmed on Arc', 'success')
+    }
+  }, [isSuccess])
 
   function handleApprove() {
     if (!amountIn || !address) return
@@ -61,9 +70,10 @@ export default function SwapView() {
       address: USDC_ADDRESS,
       abi: ERC20_ABI,
       functionName: 'approve',
-      args: [ANCHOR_FX_ROUTER_ADDRESS, parseUnits(amountIn, 6)],
+      args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
     })
-    notify('Approve Submitted', 'Approving USDC spend...', 'info')
+    setApproved(true)
+    notify('Approve Submitted', 'Approving unlimited USDC spend...', 'info')
   }
 
   function handleSwap() {
@@ -80,6 +90,8 @@ export default function SwapView() {
 
     notify('Swap Submitted', `Swapping ${amountIn} USDC for EURC`, 'info')
   }
+
+  const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   return (
     <div className="view-section swap-view-centered">
@@ -99,7 +111,7 @@ export default function SwapView() {
             <div className="anchor-input-row">
               <span className="anchor-input-label">You Pay</span>
               <span className="anchor-balance">
-                Balance: {balanceData ? parseFloat(balanceData.formatted).toFixed(2) : '0.00'} USDC
+                Balance: {balance.toFixed(2)} USDC
               </span>
             </div>
             <input
@@ -125,10 +137,10 @@ export default function SwapView() {
           )}
 
           {isSuccess && (
-            <p className="anchor-msg success">✓ Confirmed on Arc scan!</p>
+            <p className="anchor-msg success">Confirmed on Arc scan!</p>
           )}
           {error && (
-            <p className="anchor-msg error">{error.message.slice(0, 100)}...</p>
+            <p className="anchor-msg error">{error.shortMessage || error.message?.slice(0, 100)}</p>
           )}
         </div>
       </div>

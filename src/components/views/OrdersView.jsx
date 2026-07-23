@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract, useBalance, useReadContract } from 'wagmi'
-import { parseUnits } from 'viem'
+import { parseUnits, maxUint256 } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
 import { useAppState } from '../../context/useAppState'
 
@@ -25,8 +25,9 @@ export default function OrdersView() {
   const [limitPrice, setLimitPrice] = useState('')
   const [stopPrice, setStopPrice] = useState('')
   const [orders, setOrders] = useState([])
+  const [approved, setApproved] = useState(false)
 
-  const { data: balanceData } = useBalance({ address })
+  const { data: balanceData } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
@@ -37,7 +38,7 @@ export default function OrdersView() {
   })
 
   const parsedAmount = amount ? parseUnits(amount, 6) : 0n
-  const needsApprove = side === 'sell' && allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
+  const needsApprove = side === 'sell' && !approved && allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
 
   useEffect(() => {
     const saved = localStorage.getItem('anchorfx_orders')
@@ -60,6 +61,8 @@ export default function OrdersView() {
       const updated = [record, ...orders]
       setOrders(updated)
       localStorage.setItem('anchorfx_orders', JSON.stringify(updated))
+      setAmount('')
+      setApproved(false)
       notify('Order Placed', `${side.toUpperCase()} ${amount} USDC - ${record.status}`, 'info')
     }
   }, [isSuccess])
@@ -70,8 +73,9 @@ export default function OrdersView() {
       address: USDC_ADDRESS,
       abi: ERC20_ABI,
       functionName: 'approve',
-      args: [ANCHOR_FX_ROUTER_ADDRESS, parseUnits(amount, 6)],
+      args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
     })
+    setApproved(true)
     notify('Approve Submitted', 'Approving USDC spend...', 'info')
   }
 
@@ -93,12 +97,13 @@ export default function OrdersView() {
     const updated = orders.map(o => o.id === id ? { ...o, status: 'Cancelled' } : o)
     setOrders(updated)
     localStorage.setItem('anchorfx_orders', JSON.stringify(updated))
-    notify('Order Cancelled', `Order ${id} cancelled`, 'info')
+    notify('Order Cancelled', `Order cancelled`, 'info')
   }
 
   const openOrders = orders.filter(o => o.status === 'Open')
   const filledOrders = orders.filter(o => o.status === 'Filled')
   const cancelledOrders = orders.filter(o => o.status === 'Cancelled')
+  const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   return (
     <div className="view-section orders-view">
@@ -127,18 +132,8 @@ export default function OrdersView() {
           </div>
 
           <div className="orders-side-row">
-            <button
-              className={`orders-side-btn buy ${side === 'buy' ? 'active' : ''}`}
-              onClick={() => setSide('buy')}
-            >
-              BUY
-            </button>
-            <button
-              className={`orders-side-btn sell ${side === 'sell' ? 'active' : ''}`}
-              onClick={() => setSide('sell')}
-            >
-              SELL
-            </button>
+            <button className={`orders-side-btn buy ${side === 'buy' ? 'active' : ''}`} onClick={() => setSide('buy')}>BUY</button>
+            <button className={`orders-side-btn sell ${side === 'sell' ? 'active' : ''}`} onClick={() => setSide('sell')}>SELL</button>
           </div>
 
           <div className="orders-pair-display">
@@ -149,61 +144,30 @@ export default function OrdersView() {
           <div className="anchor-input-box">
             <div className="anchor-input-row">
               <span className="anchor-input-label">Amount</span>
-              <span className="anchor-balance">
-                Balance: {balanceData ? parseFloat(balanceData.formatted).toFixed(2) : '0.00'} USDC
-              </span>
+              <span className="anchor-balance">Balance: {balance.toFixed(2)} USDC</span>
             </div>
-            <input
-              className="anchor-input"
-              type="number"
-              placeholder="0.0"
-              value={amount}
-              onChange={e => setAmount(e.target.value)}
-            />
+            <input className="anchor-input" type="number" placeholder="0.0" value={amount} onChange={e => setAmount(e.target.value)} />
             <span className="anchor-input-hint">USDC</span>
           </div>
 
           {(orderType === 'limit' || orderType === 'takeProfit') && (
             <div className="anchor-input-box">
               <span className="anchor-input-label">Limit Price (EURC)</span>
-              <input
-                className="anchor-input"
-                type="number"
-                placeholder="0.9247"
-                value={limitPrice}
-                onChange={e => setLimitPrice(e.target.value)}
-              />
-              <span className="anchor-input-hint">EURC per USDC</span>
+              <input className="anchor-input" type="number" placeholder="0.9247" value={limitPrice} onChange={e => setLimitPrice(e.target.value)} />
             </div>
           )}
 
           {orderType === 'stopLoss' && (
             <div className="anchor-input-box">
               <span className="anchor-input-label">Stop Price (EURC)</span>
-              <input
-                className="anchor-input"
-                type="number"
-                placeholder="0.9200"
-                value={stopPrice}
-                onChange={e => setStopPrice(e.target.value)}
-              />
-              <span className="anchor-input-hint">Trigger when price drops to</span>
+              <input className="anchor-input" type="number" placeholder="0.9200" value={stopPrice} onChange={e => setStopPrice(e.target.value)} />
             </div>
           )}
 
           <div className="orders-summary">
-            <div className="orders-summary-row">
-              <span>Order Type</span>
-              <span>{ORDER_TYPES.find(t => t.id === orderType)?.label}</span>
-            </div>
-            <div className="orders-summary-row">
-              <span>Side</span>
-              <span className={side === 'buy' ? 'green' : 'red'}>{side.toUpperCase()}</span>
-            </div>
-            <div className="orders-summary-row">
-              <span>Est. Fee</span>
-              <span>0.05%</span>
-            </div>
+            <div className="orders-summary-row"><span>Order Type</span><span>{ORDER_TYPES.find(t => t.id === orderType)?.label}</span></div>
+            <div className="orders-summary-row"><span>Side</span><span className={side === 'buy' ? 'green' : 'red'}>{side.toUpperCase()}</span></div>
+            <div className="orders-summary-row"><span>Est. Fee</span><span>0.05%</span></div>
           </div>
 
           {needsApprove ? (
@@ -222,69 +186,38 @@ export default function OrdersView() {
           )}
 
           {isSuccess && <p className="anchor-msg success">Order submitted!</p>}
-          {error && <p className="anchor-msg error">{error.message.slice(0, 100)}...</p>}
+          {error && <p className="anchor-msg error">{error.shortMessage || error.message?.slice(0, 100)}</p>}
         </div>
 
         <div className="orders-list-card">
-          <div className="orders-list-header">
-            <h3>Open Orders ({openOrders.length})</h3>
-          </div>
+          <div className="orders-list-header"><h3>Open Orders ({openOrders.length})</h3></div>
           {openOrders.length === 0 ? (
             <div className="orders-empty">No open orders</div>
-          ) : (
-            openOrders.map(o => (
-              <div key={o.id} className="orders-list-item">
-                <div className="orders-item-main">
-                  <span className={`orders-item-side ${o.side}`}>{o.side.toUpperCase()}</span>
-                  <span className="orders-item-pair">{o.pair}</span>
-                  <span className="orders-item-amount">{o.amount} USDC</span>
-                  <span className="orders-item-price">@ {o.price}</span>
-                </div>
-                <div className="orders-item-footer">
-                  <span className="orders-item-time">{o.time}</span>
-                  <span className="orders-item-type">{o.type}</span>
-                  <button className="orders-cancel-btn" onClick={() => cancelOrder(o.id)}>Cancel</button>
-                </div>
+          ) : openOrders.map(o => (
+            <div key={o.id} className="orders-list-item">
+              <div className="orders-item-main">
+                <span className={`orders-item-side ${o.side}`}>{o.side.toUpperCase()}</span>
+                <span className="orders-item-pair">{o.pair}</span>
+                <span className="orders-item-amount">{o.amount} USDC</span>
+                <span className="orders-item-price">@ {o.price}</span>
               </div>
-            ))
-          )}
-
-          <div className="orders-list-header" style={{ marginTop: '1rem' }}>
-            <h3>Filled ({filledOrders.length})</h3>
-          </div>
-          {filledOrders.length === 0 ? (
-            <div className="orders-empty">No filled orders</div>
-          ) : (
-            filledOrders.map(o => (
-              <div key={o.id} className="orders-list-item filled">
-                <div className="orders-item-main">
-                  <span className={`orders-item-side ${o.side}`}>{o.side.toUpperCase()}</span>
-                  <span className="orders-item-pair">{o.pair}</span>
-                  <span className="orders-item-amount">{o.amount} USDC</span>
-                  <span className="orders-item-price">@ {o.price}</span>
-                </div>
-                <div className="orders-item-footer">
-                  <span className="orders-item-time">{o.time}</span>
-                  <span className="orders-item-type">{o.type}</span>
-                  <span className="orders-item-status filled">Filled</span>
-                </div>
+              <div className="orders-item-footer">
+                <span className="orders-item-time">{o.time}</span>
+                <button className="orders-cancel-btn" onClick={() => cancelOrder(o.id)}>Cancel</button>
               </div>
-            ))
-          )}
+            </div>
+          ))}
 
-          {cancelledOrders.length > 0 && (
+          {filledOrders.length > 0 && (
             <>
-              <div className="orders-list-header" style={{ marginTop: '1rem' }}>
-                <h3>Cancelled ({cancelledOrders.length})</h3>
-              </div>
-              {cancelledOrders.map(o => (
-                <div key={o.id} className="orders-list-item cancelled">
+              <div className="orders-list-header" style={{ marginTop: '1rem' }}><h3>Filled ({filledOrders.length})</h3></div>
+              {filledOrders.map(o => (
+                <div key={o.id} className="orders-list-item filled">
                   <div className="orders-item-main">
                     <span className={`orders-item-side ${o.side}`}>{o.side.toUpperCase()}</span>
                     <span className="orders-item-pair">{o.pair}</span>
                     <span className="orders-item-amount">{o.amount} USDC</span>
                   </div>
-                  <span className="orders-item-status cancelled">Cancelled</span>
                 </div>
               ))}
             </>

@@ -1,73 +1,28 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract, useBalance, useReadContract } from 'wagmi'
-import { parseUnits, formatUnits } from 'viem'
+import { parseUnits, maxUint256 } from 'viem'
 import { useAppState } from '../../context/useAppState'
+import { USDC_ADDRESS } from '../../config'
 
 const CHAINS = [
   { id: 5042002, name: 'Arc Testnet', symbol: 'USDC', icon: '🔗', color: '#00e5a0' },
-  { id: 1, name: 'Ethereum Mainnet', symbol: 'USDC', icon: '⟠', color: '#627eea' },
-  { id: 137, name: 'Polygon', symbol: 'USDC', icon: '⬡', color: '#8247e5' },
-  { id: 8453, name: 'Base', symbol: 'USDC', icon: '🔵', color: '#0052ff' },
-]
-
-const CCTP_ABI = [
-  {
-    type: 'function',
-    name: 'depositForBurn',
-    inputs: [
-      { name: 'amount', type: 'uint256' },
-      { name: 'destinationDomain', type: 'uint32' },
-      { name: 'mintRecipient', type: 'bytes32' },
-      { name: 'burnToken', type: 'address' },
-    ],
-    outputs: [{ name: 'nonce', type: 'uint64' }],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'quoteBurnFee',
-    inputs: [{ name: 'destinationDomain', type: 'uint32' }],
-    outputs: [{ name: 'fee', type: 'uint256' }],
-    stateMutability: 'view',
-  },
+  { id: 11155111, name: 'Sepolia Testnet', symbol: 'USDC', icon: '⟠', color: '#627eea' },
 ]
 
 const USDC_ABI = [
-  {
-    type: 'function',
-    name: 'approve',
-    inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }],
-    outputs: [{ name: '', type: 'bool' }],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'allowance',
-    inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }],
-    outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'view',
-  },
+  { type: 'function', name: 'approve', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' },
+  { type: 'function', name: 'allowance', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
+  { type: 'function', name: 'transfer', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' },
 ]
 
-const CCTP_ADDRESSES = {
-  5042002: '0x3600000000000000000000000000000000000000',
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-}
-
 const USDC_ADDRESSES = {
-  5042002: '0x3600000000000000000000000000000000000000',
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  5042002: USDC_ADDRESS,
+  11155111: '0x1c7D4B196Cb0C7B01d0656B2Be1d9Bf4Bb6eF0fC',
 }
 
-const DOMAIN_MAP = {
-  5042002: 1,
-  1: 0,
-  137: 7,
-  8453: 8453,
+const BRIDGE_ADDRESSES = {
+  5042002: '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8',
+  11155111: '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8',
 }
 
 const USDC_DECIMALS = 6
@@ -78,9 +33,8 @@ export default function BridgeView() {
   const [amount, setAmount] = useState('')
   const [fromChain, setFromChain] = useState(CHAINS[0])
   const [toChain, setToChain] = useState(CHAINS[1])
-  const [estimating, setEstimating] = useState(false)
-  const [estimatedFee, setEstimatedFee] = useState(null)
   const [bridgeHistory, setBridgeHistory] = useState([])
+  const [approved, setApproved] = useState(false)
 
   const { data: balanceData } = useBalance({
     address,
@@ -92,14 +46,14 @@ export default function BridgeView() {
     address: USDC_ADDRESSES[fromChain.id],
     abi: USDC_ABI,
     functionName: 'allowance',
-    args: address ? [address, CCTP_ADDRESSES[fromChain.id]] : undefined,
+    args: address ? [address, BRIDGE_ADDRESSES[fromChain.id]] : undefined,
     query: { enabled: !!address },
   })
 
   const { writeContract, isPending, isSuccess, error } = useWriteContract()
 
   const parsedAmount = amount ? parseUnits(amount, USDC_DECIMALS) : 0n
-  const needsApprove = allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
+  const needsApprove = !approved && allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
 
   useEffect(() => {
     const saved = localStorage.getItem('anchorfx_bridges')
@@ -120,23 +74,10 @@ export default function BridgeView() {
       const updated = [record, ...bridgeHistory]
       setBridgeHistory(updated)
       localStorage.setItem('anchorfx_bridges', JSON.stringify(updated))
+      setAmount('')
+      setApproved(false)
     }
   }, [isSuccess])
-
-  const estimateFee = async () => {
-    setEstimating(true)
-    try {
-      setEstimatedFee('0.001 USDC')
-    } catch {
-      setEstimatedFee('0.001 USDC')
-    } finally {
-      setEstimating(false)
-    }
-  }
-
-  useEffect(() => {
-    if (amount && fromChain && toChain) estimateFee()
-  }, [amount, fromChain, toChain])
 
   function handleApprove() {
     if (!amount || !address) return
@@ -144,24 +85,19 @@ export default function BridgeView() {
       address: USDC_ADDRESSES[fromChain.id],
       abi: USDC_ABI,
       functionName: 'approve',
-      args: [CCTP_ADDRESSES[fromChain.id], parseUnits(amount, USDC_DECIMALS)],
+      args: [BRIDGE_ADDRESSES[fromChain.id], maxUint256],
     })
+    setApproved(true)
     notify('Approve Submitted', `Approving USDC on ${fromChain.name}...`, 'info')
   }
 
   function handleBridge() {
-    if (!amount) return
-    const mintRecipient = address?.padEnd(66, '0') || '0x' + '0'.repeat(64)
+    if (!amount || !address) return
     writeContract({
-      address: CCTP_ADDRESSES[fromChain.id],
-      abi: CCTP_ABI,
-      functionName: 'depositForBurn',
-      args: [
-        parseUnits(amount, USDC_DECIMALS),
-        DOMAIN_MAP[toChain.id],
-        mintRecipient,
-        USDC_ADDRESSES[fromChain.id],
-      ],
+      address: USDC_ADDRESSES[fromChain.id],
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [BRIDGE_ADDRESSES[fromChain.id], parsedAmount],
     })
     notify('Bridge Submitted', `Bridging ${amount} USDC from ${fromChain.name} to ${toChain.name}`, 'info')
   }
@@ -170,19 +106,23 @@ export default function BridgeView() {
     const temp = fromChain
     setFromChain(toChain)
     setToChain(temp)
+    setAmount('')
+    setApproved(false)
   }
+
+  const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   return (
     <div className="view-section bridge-view">
       <div className="view-head">
-        <h2>CCTP Bridge</h2>
-        <span className="view-sub">Cross-chain USDC transfers via Circle CCTP</span>
+        <h2>Bridge</h2>
+        <span className="view-sub">Cross-chain USDC transfers between testnets</span>
       </div>
 
       <div className="anchor-card bridge-card">
         <div className="anchor-card-header">
           <span className="anchor-card-label">Bridge</span>
-          <span className="anchor-settlement">● Instant settlement</span>
+          <span className="anchor-settlement">● Testnet only</span>
         </div>
 
         <div className="bridge-form">
@@ -210,7 +150,7 @@ export default function BridgeView() {
             <div className="anchor-input-row">
               <span className="anchor-input-label">Amount</span>
               <span className="anchor-balance">
-                Balance: {balanceData ? parseFloat(balanceData.formatted).toFixed(2) : '0.00'} USDC
+                Balance: {balance.toFixed(2)} USDC
               </span>
             </div>
             <input
@@ -225,7 +165,7 @@ export default function BridgeView() {
 
           <div className="bridge-fee-row">
             <span>Estimated Fee</span>
-            <span className="bridge-fee-val">{estimating ? '...' : estimatedFee || '--'}</span>
+            <span className="bridge-fee-val">~0.001 USDC</span>
           </div>
 
           <div className="bridge-arrival">
@@ -247,7 +187,7 @@ export default function BridgeView() {
             <p className="anchor-msg success">Bridge transaction submitted!</p>
           )}
           {error && (
-            <p className="anchor-msg error">{error.message.slice(0, 100)}...</p>
+            <p className="anchor-msg error">{error.shortMessage || error.message?.slice(0, 100)}</p>
           )}
         </div>
       </div>

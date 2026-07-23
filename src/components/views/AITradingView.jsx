@@ -1,67 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAppState } from '../../context/useAppState'
 
 const STRATEGIES = [
-  {
-    id: 'trend',
-    name: 'Trend Following',
-    description: 'Follows market momentum using EMA crossovers and RSI',
-    icon: '📈',
-    risk: 'Medium',
-    winRate: 62,
-    pairs: ['BTC/USD', 'ETH/USD', 'EUR/USD'],
-    status: 'active',
-  },
-  {
-    id: 'meanRev',
-    name: 'Mean Reversion',
-    description: 'Trades price reversions to Bollinger Band extremes',
-    icon: '🔄',
-    risk: 'Low',
-    winRate: 58,
-    pairs: ['EUR/USD', 'GBP/USD'],
-    status: 'active',
-  },
-  {
-    id: 'breakout',
-    name: 'Breakout Trading',
-    description: 'Enters on high-volume breakouts from consolidation',
-    icon: '🚀',
-    risk: 'High',
-    winRate: 45,
-    pairs: ['BTC/USD', 'ETH/USD'],
-    status: 'paused',
-  },
-  {
-    id: 'grid',
-    name: 'Grid Trading',
-    description: 'Places orders at intervals to capture range movements',
-    icon: '📐',
-    risk: 'Low',
-    winRate: 72,
-    pairs: ['USDC/EURC'],
-    status: 'active',
-  },
-  {
-    id: 'arbitrage',
-    name: 'Cross-Chain Arbitrage',
-    description: 'Exploits price differences across chains',
-    icon: '⚡',
-    risk: 'Medium',
-    winRate: 85,
-    pairs: ['USDC/EURC'],
-    status: 'active',
-  },
-  {
-    id: 'sentiment',
-    name: 'Sentiment Analysis',
-    description: 'Trades based on news and social sentiment',
-    icon: '🧠',
-    risk: 'High',
-    winRate: 55,
-    pairs: ['BTC/USD', 'ETH/USD', 'SOL/USD'],
-    status: 'paused',
-  },
+  { id: 'trend', name: 'Trend Following', description: 'Follows market momentum using EMA crossovers and RSI', icon: '📈', risk: 'Medium', winRate: 62, pairs: ['BTC/USD', 'ETH/USD', 'EUR/USD'], status: 'active' },
+  { id: 'meanRev', name: 'Mean Reversion', description: 'Trades price reversions to Bollinger Band extremes', icon: '🔄', risk: 'Low', winRate: 58, pairs: ['EUR/USD', 'GBP/USD'], status: 'active' },
+  { id: 'breakout', name: 'Breakout Trading', description: 'Enters on high-volume breakouts from consolidation', icon: '🚀', risk: 'High', winRate: 45, pairs: ['BTC/USD', 'ETH/USD'], status: 'paused' },
+  { id: 'grid', name: 'Grid Trading', description: 'Places orders at intervals to capture range movements', icon: '📐', risk: 'Low', winRate: 72, pairs: ['USDC/EURC'], status: 'active' },
+  { id: 'arbitrage', name: 'Cross-Chain Arbitrage', description: 'Exploits price differences across chains', icon: '⚡', risk: 'Medium', winRate: 85, pairs: ['USDC/EURC'], status: 'active' },
+  { id: 'sentiment', name: 'Sentiment Analysis', description: 'Trades based on news and social sentiment', icon: '🧠', risk: 'High', winRate: 55, pairs: ['BTC/USD', 'ETH/USD', 'SOL/USD'], status: 'paused' },
 ]
 
 const SIGNALS = [
@@ -85,103 +31,61 @@ const PERFORMANCE = {
 
 export default function AITradingView() {
   const { notify } = useAppState()
-  const [selectedStrategy, setSelectedStrategy] = useState(null)
+  const [activeTab, setActiveTab] = useState('signals')
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', content: 'Welcome to AnchorFX AI Trading Assistant. I can help you with:\n\n- Analyzing market conditions\n- Setting up trading strategies\n- Monitoring open positions\n- Risk management advice\n\nHow can I assist you today?' },
+    { role: 'assistant', content: 'Welcome to AnchorFX AI Trading Demo.\n\nThis is a simulated AI assistant. The signals and strategies shown are for demonstration purposes only.\n\nFor real trading, use the Swap or Orders tabs.' },
   ])
-  const [activeTab, setActiveTab] = useState('signals')
 
   function handleSendMessage() {
     if (!chatInput.trim()) return
-
     const userMsg = { role: 'user', content: chatInput }
     setChatMessages(prev => [...prev, userMsg])
     setChatInput('')
 
     setTimeout(() => {
-      let response = ''
-      const input = chatInput.toLowerCase()
-
-      if (input.includes('buy') || input.includes('long')) {
-        response = 'Based on current analysis:\n\n- BTC/USD shows bullish momentum (RSI: 62)\n- EUR/USD is at support level (0.9245)\n- Recommended position size: 2-5% of portfolio\n\nWould you like me to execute a trade?'
-      } else if (input.includes('sell') || input.includes('short')) {
-        response = 'Current short opportunities:\n\n- ETH/USD showing bearish divergence\n- SOL/USD breaking below support\n- Recommended: Use stop-loss at 2% above entry\n\nShall I set up a sell order?'
-      } else if (input.includes('risk') || input.includes('portfolio')) {
-        response = `Portfolio Risk Analysis:\n\n- Total exposure: $12,450\n- Max drawdown: -8.2%\n- Sharpe ratio: 1.89\n- Diversification: Good (4/6 pairs)\n\nRecommendation: Reduce BTC exposure by 15%`
-      } else if (input.includes('market') || input.includes('analysis')) {
-        response = 'Market Analysis Summary:\n\n- BTC: Bullish trend, targeting $70k\n- ETH: Consolidating, watch $2000 resistance\n- EUR/USD: Range-bound 0.92-0.93\n- Overall sentiment: Cautiously bullish\n\nKey levels to watch provided in chart.'
-      } else if (input.includes('strategy') || input.includes('strategy')) {
-        response = 'Available AI Strategies:\n\n1. Trend Following (62% win rate)\n2. Mean Reversion (58% win rate)\n3. Grid Trading (72% win rate)\n\nRecommendation: Grid Trading for current range-bound market.'
-      } else {
-        response = `I understand you're asking about "${chatInput}". Let me analyze the current market conditions and provide you with actionable insights. Based on our AI models:\n\n- Current market volatility: Medium\n- Trend direction: Mixed\n- Recommended action: Hold and monitor\n\nWould you like more specific analysis on any particular asset?`
-      }
-
-      setChatMessages(prev => [...prev, { role: 'assistant', content: response }])
-    }, 800)
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `This is a demo AI assistant. For real trading decisions, please:\n\n1. Use the Markets tab for live prices\n2. Use the Swap tab for on-chain swaps\n3. Use the Orders tab for limit/stop orders\n\nThe AI Trading features are under development.`
+      }])
+    }, 500)
   }
 
   function toggleStrategy(strategy) {
-    const updated = STRATEGIES.map(s =>
-      s.id === strategy.id ? { ...s, status: s.status === 'active' ? 'paused' : 'active' } : s
-    )
-    const newStatus = strategy.status === 'active' ? 'paused' : 'active'
-    notify('Strategy Updated', `${strategy.name} ${newStatus}`, 'info')
+    notify('Demo Mode', `${strategy.name} toggled (demo only)`, 'info')
   }
 
   return (
     <div className="view-section ai-view">
       <div className="view-head">
         <h2>AI Trading</h2>
-        <span className="view-sub">Intelligent trading strategies on Arc Network</span>
+        <span className="view-sub">Demo - simulated trading signals and strategies</span>
+      </div>
+
+      <div style={{ padding: '1rem', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 12, marginBottom: '1.5rem', fontSize: 13, color: '#f59e0b' }}>
+        AI Trading is a demo feature. Signals are simulated. Use Swap and Orders tabs for real trading.
       </div>
 
       <div className="ai-tabs">
-        <button className={`ai-tab ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>
-          Live Signals
-        </button>
-        <button className={`ai-tab ${activeTab === 'strategies' ? 'active' : ''}`} onClick={() => setActiveTab('strategies')}>
-          Strategies
-        </button>
-        <button className={`ai-tab ${activeTab === 'performance' ? 'active' : ''}`} onClick={() => setActiveTab('performance')}>
-          Performance
-        </button>
-        <button className={`ai-tab ${activeTab === 'assistant' ? 'active' : ''}`} onClick={() => setActiveTab('assistant')}>
-          AI Assistant
-        </button>
+        <button className={`ai-tab ${activeTab === 'signals' ? 'active' : ''}`} onClick={() => setActiveTab('signals')}>Signals</button>
+        <button className={`ai-tab ${activeTab === 'strategies' ? 'active' : ''}`} onClick={() => setActiveTab('strategies')}>Strategies</button>
+        <button className={`ai-tab ${activeTab === 'performance' ? 'active' : ''}`} onClick={() => setActiveTab('performance')}>Performance</button>
+        <button className={`ai-tab ${activeTab === 'assistant' ? 'active' : ''}`} onClick={() => setActiveTab('assistant')}>AI Assistant</button>
       </div>
 
       {activeTab === 'signals' && (
         <div className="ai-signals">
-          <div className="ai-signals-header">
-            <h3>Live Trading Signals</h3>
-            <span className="ai-signals-count">{SIGNALS.length} active signals</span>
-          </div>
           {SIGNALS.map((signal, i) => (
-            <div key={i} className="ai-signal-card">
+            <div key={i} className="ai-signal-card" style={{ opacity: 0.7 }}>
               <div className="ai-signal-pair">
                 <span className="ai-signal-pair-name">{signal.pair}</span>
                 <span className="ai-signal-price">{signal.price}</span>
               </div>
-              <div className={`ai-signal-action ${signal.signal.toLowerCase()}`}>
-                {signal.signal}
-              </div>
+              <div className={`ai-signal-action ${signal.signal.toLowerCase()}`}>{signal.signal}</div>
               <div className="ai-signal-details">
-                <div className="ai-signal-detail">
-                  <span>Confidence</span>
-                  <span className="ai-confidence">
-                    <span className="ai-confidence-bar" style={{ width: signal.confidence + '%' }} />
-                    {signal.confidence}%
-                  </span>
-                </div>
-                <div className="ai-signal-detail">
-                  <span>Strategy</span>
-                  <span>{signal.strategy}</span>
-                </div>
-                <div className="ai-signal-detail">
-                  <span>Time</span>
-                  <span>{signal.time}</span>
-                </div>
+                <div className="ai-signal-detail"><span>Confidence</span><span>{signal.confidence}%</span></div>
+                <div className="ai-signal-detail"><span>Strategy</span><span>{signal.strategy}</span></div>
+                <div className="ai-signal-detail"><span>Time</span><span>{signal.time}</span></div>
               </div>
             </div>
           ))}
@@ -191,39 +95,19 @@ export default function AITradingView() {
       {activeTab === 'strategies' && (
         <div className="ai-strategies">
           {STRATEGIES.map(strategy => (
-            <div key={strategy.id} className="ai-strategy-card">
+            <div key={strategy.id} className="ai-strategy-card" style={{ opacity: 0.7 }}>
               <div className="ai-strategy-header">
                 <span className="ai-strategy-icon">{strategy.icon}</span>
                 <div className="ai-strategy-info">
                   <h3 className="ai-strategy-name">{strategy.name}</h3>
                   <p className="ai-strategy-desc">{strategy.description}</p>
                 </div>
-                <div className="ai-strategy-toggle">
-                  <button
-                    className={`ai-toggle-btn ${strategy.status === 'active' ? 'active' : ''}`}
-                    onClick={() => toggleStrategy(strategy)}
-                  >
-                    {strategy.status === 'active' ? 'ON' : 'OFF'}
-                  </button>
-                </div>
+                <span className="vault-risk risk-medium">Demo</span>
               </div>
               <div className="ai-strategy-stats">
-                <div className="ai-strategy-stat">
-                  <span>Win Rate</span>
-                  <span className="green">{strategy.winRate}%</span>
-                </div>
-                <div className="ai-strategy-stat">
-                  <span>Risk</span>
-                  <span className={`risk-${strategy.risk.toLowerCase()}`}>{strategy.risk}</span>
-                </div>
-                <div className="ai-strategy-stat">
-                  <span>Pairs</span>
-                  <span>{strategy.pairs.join(', ')}</span>
-                </div>
-                <div className="ai-strategy-stat">
-                  <span>Status</span>
-                  <span className={strategy.status === 'active' ? 'green' : 'red'}>{strategy.status}</span>
-                </div>
+                <div className="ai-strategy-stat"><span>Win Rate</span><span className="green">{strategy.winRate}%</span></div>
+                <div className="ai-strategy-stat"><span>Risk</span><span>{strategy.risk}</span></div>
+                <div className="ai-strategy-stat"><span>Pairs</span><span>{strategy.pairs.join(', ')}</span></div>
               </div>
             </div>
           ))}
@@ -233,39 +117,14 @@ export default function AITradingView() {
       {activeTab === 'performance' && (
         <div className="ai-performance">
           <div className="ai-perf-grid">
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Total Return</span>
-              <span className="ai-perf-val green">+{PERFORMANCE.totalReturn}%</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Win Rate</span>
-              <span className="ai-perf-val">{PERFORMANCE.winRate}%</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Profit Factor</span>
-              <span className="ai-perf-val green">{PERFORMANCE.profitFactor}x</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Sharpe Ratio</span>
-              <span className="ai-perf-val">{PERFORMANCE.sharpeRatio}</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Max Drawdown</span>
-              <span className="ai-perf-val red">{PERFORMANCE.maxDrawdown}%</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Total Trades</span>
-              <span className="ai-perf-val">{PERFORMANCE.totalTrades}</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Avg Win</span>
-              <span className="ai-perf-val green">+{PERFORMANCE.avgWin}%</span>
-            </div>
-            <div className="ai-perf-card">
-              <span className="ai-perf-label">Avg Loss</span>
-              <span className="ai-perf-val red">{PERFORMANCE.avgLoss}%</span>
-            </div>
+            <div className="ai-perf-card"><span className="ai-perf-label">Total Return</span><span className="ai-perf-val green">+{PERFORMANCE.totalReturn}%</span></div>
+            <div className="ai-perf-card"><span className="ai-perf-label">Win Rate</span><span className="ai-perf-val">{PERFORMANCE.winRate}%</span></div>
+            <div className="ai-perf-card"><span className="ai-perf-label">Profit Factor</span><span className="ai-perf-val green">{PERFORMANCE.profitFactor}x</span></div>
+            <div className="ai-perf-card"><span className="ai-perf-label">Sharpe Ratio</span><span className="ai-perf-val">{PERFORMANCE.sharpeRatio}</span></div>
+            <div className="ai-perf-card"><span className="ai-perf-label">Max Drawdown</span><span className="ai-perf-val red">{PERFORMANCE.maxDrawdown}%</span></div>
+            <div className="ai-perf-card"><span className="ai-perf-label">Total Trades</span><span className="ai-perf-val">{PERFORMANCE.totalTrades}</span></div>
           </div>
+          <p style={{ marginTop: '1rem', fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>Simulated performance data for demo purposes</p>
         </div>
       )}
 
@@ -284,7 +143,7 @@ export default function AITradingView() {
           <div className="ai-chat-input">
             <input
               type="text"
-              placeholder="Ask AI about market conditions, strategies, risk..."
+              placeholder="Ask about the demo..."
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSendMessage()}
