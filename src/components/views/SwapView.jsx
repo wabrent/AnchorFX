@@ -66,6 +66,7 @@ export default function SwapView() {
   })
 
   const parsedAmount = amountIn ? parseUnits(amountIn, inDecimals) : 0n
+  const amountTooBig = parsedAmount > 0n && parseFloat(amountIn) > balanceIn
   const allowanceOk = allowance !== undefined && parsedAmount > 0n && allowance >= parsedAmount
   const needsApprove = !approveConfirmed && !allowanceOk
 
@@ -309,7 +310,11 @@ export default function SwapView() {
             <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', color: 'var(--text3)' }}>{DEADLINE_MINUTES}m</span>
           </div>
 
-          {needsApprove ? (
+          {amountTooBig ? (
+            <button className="anchor-swap-btn" disabled style={{ background: 'var(--s3)', color: 'var(--red)', cursor: 'not-allowed' }}>
+              Insufficient {inSymbol} Balance
+            </button>
+          ) : needsApprove ? (
             <button className="anchor-swap-btn" onClick={handleApprove} disabled={isPending}>
               {isPending ? 'Approving...' : `Approve ${inSymbol}`}
             </button>
