@@ -2,13 +2,13 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'wagmi'
 import { arcTestnet as _arcTestnet } from 'viem/chains'
 
-const ARC_RPC = 'https://rpc.drpc.testnet.arc.io'
+const VERCEL_URL = import.meta.env.VITE_VERCEL_URL || 'https://anchor-fx-self.vercel.app'
 
 export const arcTestnet = {
   ..._arcTestnet,
   rpcUrls: {
     ..._arcTestnet.rpcUrls,
-    default: { http: [ARC_RPC] },
+    default: { http: [`${VERCEL_URL}/api/rpc`] },
   },
 }
 
@@ -27,6 +27,6 @@ export const config = getDefaultConfig({
   projectId: walletConnectProjectId || '00000000000000000000000000000000',
   chains: [arcTestnet],
   transports: {
-    [arcTestnet.id]: http(ARC_RPC),
+    [arcTestnet.id]: http('/api/rpc'),
   },
 })
