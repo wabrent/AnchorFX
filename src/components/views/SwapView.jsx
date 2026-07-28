@@ -78,6 +78,7 @@ export default function SwapView() {
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
+      gas: 200000n,
     })
     notify('Approve Submitted', 'Confirming USDC approval...', 'info')
   }
@@ -93,6 +94,7 @@ export default function SwapView() {
       abi: ANCHOR_FX_ROUTER_ABI,
       functionName: 'swapFX',
       args: [USDC_ADDRESS, EURC_ADDRESS, parsedAmount, minOut, parsedRate],
+      gas: 300000n,
     })
 
     notify('Swap Submitted', `Swapping ${amountIn} USDC for EURC...`, 'info')
@@ -147,7 +149,7 @@ export default function SwapView() {
             <p className="anchor-msg success">Confirmed on Arc scan!</p>
           )}
           {error && (
-            <p className="anchor-msg error">{error.shortMessage || error.message?.slice(0, 100)}</p>
+            <p className="anchor-msg error">{error.shortMessage || error.message}</p>
           )}
         </div>
       </div>

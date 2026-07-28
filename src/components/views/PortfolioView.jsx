@@ -1,13 +1,31 @@
-import { useAccount, useBalance } from 'wagmi'
+import { useAccount, useReadContract } from 'wagmi'
 import { EURC_ADDRESS } from '../../config'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
+import { formatUnits } from 'viem'
+
+const BALANCE_OF_ABI = [
+  {
+    type: 'function',
+    name: 'balanceOf',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+  },
+]
 
 export default function PortfolioView() {
   const { address } = useAccount()
   const { balance: usdc } = useUsdcBalance()
-  const { data: eurcBalance } = useBalance({ address, token: EURC_ADDRESS, chainId: 5042002 })
 
-  const eurc = eurcBalance ? parseFloat(eurcBalance.formatted) : 0
+  const { data: eurcRaw } = useReadContract({
+    address: EURC_ADDRESS,
+    abi: BALANCE_OF_ABI,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address },
+  })
+
+  const eurc = typeof eurcRaw === 'bigint' ? parseFloat(formatUnits(eurcRaw, 18)) : 0
 
   return (
     <div className="view-section">
