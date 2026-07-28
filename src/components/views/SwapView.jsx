@@ -333,6 +333,31 @@ export default function SwapView() {
             <p className="anchor-msg error">{error.shortMessage || error.message}</p>
           )}
         </div>
+
+        <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--s1)', borderRadius: 10, border: '0.5px solid var(--border)' }}>
+          <p style={{ fontSize: 11, color: 'var(--accent2)', margin: 0 }}>
+            Router needs EURC liquidity. Send some to enable swaps.
+          </p>
+          <button
+            style={{
+              marginTop: 6, padding: '5px 14px', background: 'var(--accent2)', color: '#000',
+              border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+            }}
+            onClick={() => {
+              if (eurcBalance <= 0) return
+              writeContract({
+                address: EURC_ADDRESS,
+                abi: ERC20_ABI,
+                functionName: 'transfer',
+                args: [ANCHOR_FX_ROUTER_ADDRESS, parseUnits(eurcBalance.toFixed(6), 6)],
+                gas: 200000n,
+                maxFeePerGas: parseGwei('20'),
+                maxPriorityFeePerGas: parseGwei('1'),
+              })
+              notify('Funding Router', `Sending ${eurcBalance.toFixed(6)} EURC to router`, 'info')
+            }}
+          >Send All EURC to Router</button>
+        </div>
       </div>
     </div>
   )
