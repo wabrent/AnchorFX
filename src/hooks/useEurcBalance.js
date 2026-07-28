@@ -1,6 +1,12 @@
-import { useAccount, useReadContract } from 'wagmi'
-import { formatUnits } from 'viem'
-import { EURC_ADDRESS } from '../config'
+import { useState, useEffect } from 'react'
+import { useAccount } from 'wagmi'
+import { createPublicClient, http, formatUnits } from 'viem'
+import { arcTestnet, EURC_ADDRESS } from '../config'
+
+const client = createPublicClient({
+  chain: arcTestnet,
+  transport: http('/api/rpc'),
+})
 
 const BALANCE_OF_ABI = [
   {
@@ -14,20 +20,36 @@ const BALANCE_OF_ABI = [
 
 export function useEurcBalance() {
   const { address } = useAccount()
+  const [value, setValue] = useState(0n)
 
-  const { data, refetch } = useReadContract({
-    address: EURC_ADDRESS,
-    abi: BALANCE_OF_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    query: { enabled: !!address, refetchInterval: 5000 },
-  })
+  useEffect(() => {
+    if (!address) {
+      setValue(0n)
+      return
+    }
 
-  if (!address) return { balance: 0, formatted: '0', isLoading: false, refetch: () => {} }
+    const fetch = async () => {
+      try {
+        const data = await client.readContract({
+          address: EURC_ADDRESS,
+          abi: BALANCE_OF_ABI,
+          functionName: 'balanceOf',
+          args: [address],
+        })
+        setValue(data)
+      } catch {
+        // ignore errors
+      }
+    }
 
-  const value = typeof data === 'bigint' ? data : 0n
+    fetch()
+    const interval = setInterval(fetch, 5000)
+    return () => clearInterval(interval)
+  }, [address])
+
+  if (!address) return { balance: 0, formatted: '0' }
+
   const formatted = formatUnits(value, 6)
   const balance = parseFloat(formatted) || 0
-
-  return { balance, formatted, value, isLoading: false, refetch }
+  return { balance, formatted }
 }

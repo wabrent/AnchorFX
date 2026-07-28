@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAccount, useReadContract } from 'wagmi'
-import { createPublicClient, http, formatUnits } from 'viem'
+import { useAccount } from 'wagmi'
+import { createPublicClient, http, formatUnits, getContract } from 'viem'
 import { arcTestnet, USDC_ADDRESS } from '../config'
 
 const client = createPublicClient({
@@ -20,41 +20,47 @@ const BALANCE_OF_ABI = [
 
 export function useUsdcBalance() {
   const { address } = useAccount()
+  const [erc20Val, setErc20Val] = useState(0n)
   const [nativeVal, setNativeVal] = useState(0n)
 
   useEffect(() => {
     if (!address) {
+      setErc20Val(0n)
       setNativeVal(0n)
       return
     }
-    let cancelled = false
-    client.getBalance({ address }).then(b => {
-      if (!cancelled) setNativeVal(b)
-    }).catch(() => {
-      if (!cancelled) setNativeVal(0n)
-    })
-    return () => { cancelled = true }
+
+    const fetch = async () => {
+      try {
+        const [e, n] = await Promise.all([
+          client.readContract({
+            address: USDC_ADDRESS,
+            abi: BALANCE_OF_ABI,
+            functionName: 'balanceOf',
+            args: [address],
+          }),
+          client.getBalance({ address }),
+        ])
+        setErc20Val(e)
+        setNativeVal(n)
+      } catch {
+        // ignore errors, keep previous value
+      }
+    }
+
+    fetch()
+    const interval = setInterval(fetch, 5000)
+    return () => clearInterval(interval)
   }, [address])
 
-  const erc20 = useReadContract({
-    address: USDC_ADDRESS,
-    abi: BALANCE_OF_ABI,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    query: { enabled: !!address, refetchInterval: 5000 },
-  })
-
-  if (!address) return { balance: 0, formatted: '0', isLoading: false, refetch: () => {} }
-
-  const erc20Val = typeof erc20.data === 'bigint' ? erc20.data : 0n
-
-  const nativeFormatted = formatUnits(nativeVal, 18)
-  const nativeBalance = parseFloat(nativeFormatted) || 0
+  if (!address) return { balance: 0, formatted: '0' }
 
   if (erc20Val > 0n) {
     const formatted = formatUnits(erc20Val, 6)
-    return { balance: parseFloat(formatted) || 0, formatted, value: erc20Val, isLoading: erc20.isLoading, refetch: erc20.refetch }
+    return { balance: parseFloat(formatted) || 0, formatted }
   }
 
-  return { balance: nativeBalance, formatted: nativeFormatted, value: nativeVal, isLoading: false, refetch: erc20.refetch }
+  const formatted = formatUnits(nativeVal, 18)
+  const balance = parseFloat(formatted) || 0
+  return { balance, formatted }
 }
