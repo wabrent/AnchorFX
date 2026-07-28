@@ -12,7 +12,27 @@ import HistoryView from './components/views/HistoryView'
 import SwapView from './components/views/SwapView'
 import TradingViewWidget from './components/views/TradingViewWidget'
 
+import { ErrorBoundary } from './components/ErrorBoundary'
+
 const queryClient = new QueryClient()
+
+function Notifications() {
+  const { notifications, dismissNotification } = useAppState()
+  if (!notifications.length) return null
+  return (
+    <div className="toast-container">
+      {notifications.map(n => (
+        <div key={n.id} className={`toast toast-${n.type}`} onClick={() => dismissNotification(n.id)}>
+          <div className="toast-head">
+            <span className="toast-title">{n.title}</span>
+            <span className="toast-time">{n.time}</span>
+          </div>
+          <span className="toast-msg">{n.message}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function Page() {
   const { activeTab } = useAppState()
@@ -21,18 +41,21 @@ function Page() {
     <div className="page">
       <Navbar />
       <div className="page-body">
-        {activeTab === 'Markets' && (
-          <div className="tab-layout">
-            <MarketsView />
-            <div className="tv-panel">
-              <TradingViewWidget />
+        <ErrorBoundary>
+          {activeTab === 'Markets' && (
+            <div className="tab-layout">
+              <MarketsView />
+              <div className="tv-panel">
+                <TradingViewWidget />
+              </div>
             </div>
-          </div>
-        )}
-        {activeTab === 'Swap' && <SwapView />}
-        {activeTab === 'Portfolio' && <PortfolioView />}
-        {activeTab === 'History' && <HistoryView />}
+          )}
+          {activeTab === 'Swap' && <SwapView />}
+          {activeTab === 'Portfolio' && <PortfolioView />}
+          {activeTab === 'History' && <HistoryView />}
+        </ErrorBoundary>
       </div>
+      <Notifications />
       <Footer />
     </div>
   )

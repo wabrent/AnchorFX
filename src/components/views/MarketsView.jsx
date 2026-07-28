@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppState } from '../../context/useAppState'
+import { TableSkeleton } from '../Skeleton'
 
 const SYMBOLS = [
   { pair: 'USDC/EURC', binance: null },
@@ -22,6 +23,7 @@ const BINANCE_MAP = {
 export default function MarketsView() {
   const { setActiveTab, setSelectedPair } = useAppState()
   const [prices, setPrices] = useState({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const symbols = SYMBOLS.filter(s => s.binance).map(s => `"${s.binance}"`).join(',')
@@ -40,6 +42,7 @@ export default function MarketsView() {
             }
           })
           setPrices(map)
+          setLoading(false)
         })
         .catch(() => {})
     }
@@ -56,6 +59,9 @@ export default function MarketsView() {
         <span className="view-sub">Live prices from Binance · Arc Testnet</span>
       </div>
       <div className="mkt-table-wrap">
+        {loading ? (
+          <TableSkeleton rows={6} />
+        ) : (
         <table className="mkt-table">
           <thead>
             <tr>
@@ -91,6 +97,7 @@ export default function MarketsView() {
             })}
           </tbody>
         </table>
+        )}
       </div>
     </div>
   )
