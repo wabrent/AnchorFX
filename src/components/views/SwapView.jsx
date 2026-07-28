@@ -1,61 +1,106 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
-import { parseUnits, maxUint256 } from 'viem'
+import { useEurcBalance } from '../../hooks/useEurcBalance'
+import { parseUnits, maxUint256, formatUnits } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
+import { ERC20_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
 
-const ERC20_ABI = [
-  { type: 'function', name: 'approve', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' },
-  { type: 'function', name: 'allowance', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ name: '', type: 'uint256' }], stateMutability: 'view' },
-]
+const DEADLINE_MINUTES = 30
 
-function fetchEURRate() {
+async function fetchRate(direction) {
+  if (direction === 'usdc2eurc') {
+    return fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
+      .then(r => r.json())
+      .then(d => (1 / parseFloat(d.price)).toFixed(6))
+      .catch(() => '0.924700')
+  }
   return fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
     .then(r => r.json())
-    .then(d => (1 / parseFloat(d.price)).toFixed(4))
-    .catch(() => '0.9247')
+    .then(d => parseFloat(d.price).toFixed(6))
+    .catch(() => '1.081400')
 }
 
 export default function SwapView() {
   const { address } = useAccount()
   const { notify } = useAppState()
   const [amountIn, setAmountIn] = useState('')
-  const [rate, setRate] = useState('0.9247')
+  const [direction, setDirection] = useState('usdc2eurc')
+  const [rate, setRate] = useState('0.924700')
+  const [slippage, setSlippage] = useState(0.5)
   const [approveConfirmed, setApproveConfirmed] = useState(false)
   const actionRef = useRef(null)
 
-  useEffect(() => {
-    fetchEURRate().then(setRate)
-  }, [])
+  const { balance: usdcBalance } = useUsdcBalance()
+  const { balance: eurcBalance } = useEurcBalance()
 
-  const { balance } = useUsdcBalance()
+  const tokenIn = direction === 'usdc2eurc' ? USDC_ADDRESS : EURC_ADDRESS
+  const tokenOut = direction === 'usdc2eurc' ? EURC_ADDRESS : USDC_ADDRESS
+  const inSymbol = direction === 'usdc2eurc' ? 'USDC' : 'EURC'
+  const outSymbol = direction === 'usdc2eurc' ? 'EURC' : 'USDC'
+  const inDecimals = direction === 'usdc2eurc' ? 6 : 18
+  const outDecimals = direction === 'usdc2eurc' ? 18 : 6
+  const balanceIn = direction === 'usdc2eurc' ? usdcBalance : eurcBalance
+  const balanceOut = direction === 'usdc2eurc' ? eurcBalance : usdcBalance
+
+  useEffect(() => {
+    fetchRate(direction).then(setRate)
+    const interval = setInterval(() => {
+      fetchRate(direction).then(r => {
+        setRate(prev => r !== prev ? r : prev)
+      })
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [direction])
+
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: USDC_ADDRESS,
+    address: tokenIn,
     abi: ERC20_ABI,
     functionName: 'allowance',
     args: address ? [address, ANCHOR_FX_ROUTER_ADDRESS] : undefined,
     query: { enabled: !!address },
   })
 
-  const parsedAmount = amountIn ? parseUnits(amountIn, 6) : 0n
+  const parsedAmount = amountIn ? parseUnits(amountIn, inDecimals) : 0n
   const allowanceOk = allowance !== undefined && parsedAmount > 0n && allowance >= parsedAmount
   const needsApprove = !approveConfirmed && !allowanceOk
+
+  const amountOut = useMemo(() => {
+    if (!amountIn) return '0'
+    const out = parseFloat(amountIn) * parseFloat(rate)
+    const fee = out * 0.0005
+    return (out - fee).toFixed(outDecimals === 6 ? 2 : 6)
+  }, [amountIn, rate, outDecimals])
+
+  const protocolFee = useMemo(() => {
+    if (!amountIn) return '0'
+    return (parseFloat(amountIn) * 0.0005).toFixed(inDecimals === 6 ? 2 : 6)
+  }, [amountIn, inDecimals])
+
+  const minOutParsed = useMemo(() => {
+    if (!amountIn || !rate) return 0n
+    const raw = parseFloat(amountIn) * parseFloat(rate)
+    const fee = raw * 0.0005
+    const afterSlippage = (raw - fee) * (1 - slippage / 100)
+    return parseUnits(afterSlippage.toFixed(outDecimals), outDecimals)
+  }, [amountIn, rate, slippage, outDecimals])
 
   useEffect(() => {
     if (isSuccess) {
       if (actionRef.current === 'approve') {
         refetchAllowance()
         setApproveConfirmed(true)
-        notify('Approval Confirmed', 'USDC approved for AnchorFX Router', 'success')
+        notify('Approval Confirmed', `${inSymbol} approved for AnchorFX Router`, 'success')
       }
       if (actionRef.current === 'swap') {
         refetchAllowance()
         const trade = {
           time: new Date().toLocaleString(),
-          type: 'USDC → EURC',
+          type: `${inSymbol} → ${outSymbol}`,
           amount: amountIn,
+          rate,
           status: 'Confirmed',
           hash: writeResult,
         }
@@ -63,7 +108,8 @@ export default function SwapView() {
         existing.unshift(trade)
         localStorage.setItem('anchorfx_trades', JSON.stringify(existing))
         setAmountIn('')
-        notify('Swap Confirmed', `Swapped ${amountIn} USDC → EURC on Arc`, 'success')
+        setApproveConfirmed(false)
+        notify('Swap Confirmed', `Swapped ${amountIn} ${inSymbol} → ${amountOut} ${outSymbol}`, 'success')
       }
       actionRef.current = null
     }
@@ -74,45 +120,62 @@ export default function SwapView() {
     if (!amountIn || !address) return
     actionRef.current = 'approve'
     writeContract({
-      address: USDC_ADDRESS,
+      address: tokenIn,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
-      gas: 200000n,
+      gas: direction === 'usdc2eurc' ? 200000n : 300000n,
     })
-    notify('Approve Submitted', 'Confirming USDC approval...', 'info')
+    notify('Approve Submitted', `Approving ${inSymbol} spend...`, 'info')
   }
 
   function handleSwap() {
     if (!amountIn) return
     actionRef.current = 'swap'
     const parsedRate = parseUnits(rate, 18)
-    const minOut = (parsedAmount * parsedRate) / BigInt(1e18)
 
     writeContract({
       address: ANCHOR_FX_ROUTER_ADDRESS,
       abi: ANCHOR_FX_ROUTER_ABI,
       functionName: 'swapFX',
-      args: [USDC_ADDRESS, EURC_ADDRESS, parsedAmount, minOut, parsedRate],
+      args: [tokenIn, tokenOut, parsedAmount, minOutParsed, parsedRate],
       gas: 300000n,
     })
 
-    notify('Swap Submitted', `Swapping ${amountIn} USDC for EURC...`, 'info')
+    notify('Swap Submitted', `${amountIn} ${inSymbol} → ~${amountOut} ${outSymbol}`, 'info')
   }
 
-  const usdcBalance = balance
+  function flipDirection() {
+    setDirection(prev => prev === 'usdc2eurc' ? 'eurc2usdc' : 'usdc2eurc')
+    setAmountIn('')
+    setApproveConfirmed(false)
+  }
+
+  if (!address) {
+    return (
+      <div className="view-section swap-view-centered">
+        <div className="view-head">
+          <h2>Swap</h2>
+          <span className="view-sub">Instant stablecoin exchange on Arc Network</span>
+        </div>
+        <div style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text3)' }}>
+          <p style={{ fontSize: 15 }}>Connect your wallet to start swapping</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="view-section swap-view-centered">
       <div className="view-head">
         <h2>Swap</h2>
-        <span className="view-sub">Instant stablecoin exchange on Arc Network</span>
+        <span className="view-sub">USDC ↔ EURC • 0.05% fee • &lt;0.4s settlement</span>
       </div>
 
       <div className="anchor-card">
         <div className="anchor-card-header">
           <span className="anchor-card-label">Exchange</span>
-          <span className="anchor-settlement">● Settlement &lt;0.4s</span>
+          <span className="anchor-settlement" style={{ color: 'var(--green)' }}>● Live Rate</span>
         </div>
 
         <div className="anchor-swap-form">
@@ -120,33 +183,134 @@ export default function SwapView() {
             <div className="anchor-input-row">
               <span className="anchor-input-label">You Pay</span>
               <span className="anchor-balance">
-                Balance: {usdcBalance.toFixed(2)} USDC
+                Balance: {balanceIn.toFixed(inDecimals === 6 ? 2 : 6)} {inSymbol}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                className="anchor-input"
+                type="number"
+                placeholder="0.0"
+                value={amountIn}
+                onChange={e => setAmountIn(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <button
+                onClick={() => setAmountIn(balanceIn > 0 ? balanceIn.toFixed(inDecimals === 6 ? 2 : 6) : '')}
+                style={{
+                  background: 'var(--s2)',
+                  border: '0.5px solid var(--border)',
+                  color: 'var(--accent)',
+                  borderRadius: 8,
+                  padding: '0 12px',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  whiteSpace: 'nowrap',
+                }}
+              >MAX</button>
+            </div>
+            <span className="anchor-input-hint">{inSymbol} (Arc Network)</span>
+          </div>
+
+          <button
+            onClick={flipDirection}
+            style={{
+              display: 'block',
+              margin: '0.25rem auto',
+              background: 'var(--s2)',
+              border: '0.5px solid var(--border)',
+              color: 'var(--text2)',
+              borderRadius: '50%',
+              width: 36,
+              height: 36,
+              fontSize: 16,
+              cursor: 'pointer',
+              lineHeight: '36px',
+              textAlign: 'center',
+            }}
+          >↓↑</button>
+
+          <div className="anchor-input-box" style={{ opacity: 0.9 }}>
+            <div className="anchor-input-row">
+              <span className="anchor-input-label">You Receive</span>
+              <span className="anchor-balance">
+                Balance: {balanceOut.toFixed(outDecimals === 6 ? 2 : 6)} {outSymbol}
               </span>
             </div>
             <input
               className="anchor-input"
-              type="number"
-              placeholder="0.0"
-              value={amountIn}
-              onChange={e => setAmountIn(e.target.value)}
+              type="text"
+              readOnly
+              value={amountOut}
+              style={{ background: 'var(--s1)' }}
             />
-            <span className="anchor-input-hint">USDC (Arc Network)</span>
+            <span className="anchor-input-hint">{outSymbol} (estimated)</span>
           </div>
 
-          <div className="anchor-rate">1 USDC = {rate} EURC</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
+            <span style={{ fontSize: 12, color: 'var(--text2)' }}>Rate</span>
+            <span style={{ fontSize: 12, fontFamily: 'DM Mono, monospace', color: 'var(--text)' }}>
+              1 {inSymbol} = {rate} {outSymbol}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem' }}>
+            <span style={{ fontSize: 12, color: 'var(--text2)' }}>Fee</span>
+            <span style={{ fontSize: 12, fontFamily: 'DM Mono, monospace', color: 'var(--text2)' }}>
+              {protocolFee} {inSymbol} (0.05%)
+            </span>
+          </div>
+
+          <div style={{ marginTop: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: 12, color: 'var(--text2)' }}>Slippage Tolerance</span>
+              <span style={{ fontSize: 12, fontFamily: 'DM Mono, monospace', color: 'var(--accent)' }}>{slippage}%</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {SLIPPAGE_OPTIONS.map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSlippage(s)}
+                  style={{
+                    flex: 1,
+                    padding: '4px 0',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    background: slippage === s ? 'var(--accent)' : 'var(--s2)',
+                    color: slippage === s ? 'var(--bg)' : 'var(--text2)',
+                    border: slippage === s ? 'none' : '0.5px solid var(--border)',
+                    fontWeight: slippage === s ? 600 : 400,
+                  }}
+                >{s}%</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Min received</span>
+            <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', color: 'var(--text3)' }}>
+              {minOutParsed > 0n ? formatUnits(minOutParsed, outDecimals) : '0'} {outSymbol}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 11, color: 'var(--text3)' }}>Deadline</span>
+            <span style={{ fontSize: 11, fontFamily: 'DM Mono, monospace', color: 'var(--text3)' }}>{DEADLINE_MINUTES}m</span>
+          </div>
 
           {needsApprove ? (
-            <button className="anchor-swap-btn" onClick={handleApprove} disabled={!address || isPending}>
-              {isPending ? 'Approving...' : 'Approve USDC'}
+            <button className="anchor-swap-btn" onClick={handleApprove} disabled={isPending}>
+              {isPending ? 'Approving...' : `Approve ${inSymbol}`}
             </button>
           ) : (
-            <button className="anchor-swap-btn" onClick={handleSwap} disabled={!address || isPending || !amountIn}>
-              {isPending ? 'Executing Transaction on Arc...' : 'Execute On-Chain FX Swap'}
+            <button className="anchor-swap-btn" onClick={handleSwap} disabled={isPending || !amountIn}>
+              {isPending ? 'Executing...' : `Swap ${inSymbol} → ${outSymbol}`}
             </button>
           )}
 
           {isSuccess && actionRef.current === null && (
-            <p className="anchor-msg success">Confirmed on Arc scan!</p>
+            <p className="anchor-msg success">Transaction confirmed on Arc!</p>
           )}
           {error && (
             <p className="anchor-msg error">{error.shortMessage || error.message}</p>
