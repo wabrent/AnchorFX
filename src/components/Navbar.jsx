@@ -1,8 +1,12 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { useAccount } from 'wagmi'
+import { useUsdcBalance } from '../hooks/useUsdcBalance'
 import { useAppState } from '../context/useAppState'
 
 export default function Navbar() {
   const { activeTab, setActiveTab, tabs } = useAppState()
+  const { address } = useAccount()
+  const { formatted } = useUsdcBalance()
 
   return (
     <header className="nav-header">
@@ -24,7 +28,12 @@ export default function Navbar() {
       </nav>
 
       <div className="nav-right">
-        <ConnectButton />
+        {address && (
+          <span style={{ marginRight: 12, fontSize: 13, fontFamily: 'DM Mono, monospace', color: 'var(--text)' }}>
+            {formatted} USDC
+          </span>
+        )}
+        <ConnectButton showBalance={false} />
       </div>
     </header>
   )
