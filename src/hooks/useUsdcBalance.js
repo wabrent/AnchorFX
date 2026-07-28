@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useAccount, usePublicClient, useReadContract } from 'wagmi'
-import { USDC_ADDRESS } from '../config'
-import { formatUnits } from 'viem'
+import { useAccount, useReadContract } from 'wagmi'
+import { createPublicClient, http, formatUnits } from 'viem'
+import { arcTestnet, USDC_ADDRESS } from '../config'
+
+const client = createPublicClient({
+  chain: arcTestnet,
+  transport: http('https://rpc.testnet.arc.network'),
+})
 
 const BALANCE_OF_ABI = [
   {
@@ -15,22 +20,21 @@ const BALANCE_OF_ABI = [
 
 export function useUsdcBalance() {
   const { address } = useAccount()
-  const publicClient = usePublicClient({ chainId: 5042002 })
   const [nativeVal, setNativeVal] = useState(0n)
 
   useEffect(() => {
-    if (!address || !publicClient) {
+    if (!address) {
       setNativeVal(0n)
       return
     }
     let cancelled = false
-    publicClient.getBalance({ address }).then(b => {
+    client.getBalance({ address }).then(b => {
       if (!cancelled) setNativeVal(b)
     }).catch(() => {
       if (!cancelled) setNativeVal(0n)
     })
     return () => { cancelled = true }
-  }, [address, publicClient])
+  }, [address])
 
   const erc20 = useReadContract({
     address: USDC_ADDRESS,
