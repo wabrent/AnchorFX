@@ -7,6 +7,7 @@ import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDR
 import { ERC20_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
 
+const SLIPPAGE_OPTIONS = [0.1, 0.5, 1, 3]
 const DEADLINE_MINUTES = 30
 
 async function fetchRate(direction) {
