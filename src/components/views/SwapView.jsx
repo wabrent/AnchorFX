@@ -93,12 +93,11 @@ export default function SwapView() {
   useEffect(() => {
     if (isSuccess) {
       if (actionRef.current === 'approve') {
-        queryClient.invalidateQueries()
         setApproveConfirmed(true)
+        setTimeout(() => queryClient.refetchQueries({ type: 'active' }), 500)
         notify('Approval Confirmed', `${inSymbol} approved for AnchorFX Router`, 'success')
       }
       if (actionRef.current === 'swap') {
-        queryClient.invalidateQueries()
         const trade = {
           time: new Date().toLocaleString(),
           type: `${inSymbol} → ${outSymbol}`,
@@ -111,8 +110,8 @@ export default function SwapView() {
         existing.unshift(trade)
         localStorage.setItem('anchorfx_trades', JSON.stringify(existing))
         setAmountIn('')
-        setApproveConfirmed(false)
         notify('Swap Confirmed', `Swapped ${amountIn} ${inSymbol} → ${amountOut} ${outSymbol}`, 'success')
+        setTimeout(() => queryClient.refetchQueries({ type: 'active' }), 2000)
       }
       actionRef.current = null
     }
