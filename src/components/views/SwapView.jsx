@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
+import { useQueryClient } from '@tanstack/react-query'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
 import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
@@ -26,6 +27,7 @@ async function fetchRate(direction) {
 export default function SwapView() {
   const { address } = useAccount()
   const { notify } = useAppState()
+  const queryClient = useQueryClient()
   const [amountIn, setAmountIn] = useState('')
   const [direction, setDirection] = useState('usdc2eurc')
   const [rate, setRate] = useState('0.924700')
@@ -33,8 +35,8 @@ export default function SwapView() {
   const [approveConfirmed, setApproveConfirmed] = useState(false)
   const actionRef = useRef(null)
 
-  const { balance: usdcBalance, refetch: refetchUsdc } = useUsdcBalance()
-  const { balance: eurcBalance, refetch: refetchEurc } = useEurcBalance()
+  const { balance: usdcBalance } = useUsdcBalance()
+  const { balance: eurcBalance } = useEurcBalance()
 
   const tokenIn = direction === 'usdc2eurc' ? USDC_ADDRESS : EURC_ADDRESS
   const tokenOut = direction === 'usdc2eurc' ? EURC_ADDRESS : USDC_ADDRESS
@@ -56,7 +58,7 @@ export default function SwapView() {
   }, [direction])
 
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
-  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+  const { data: allowance } = useReadContract({
     address: tokenIn,
     abi: ERC20_ABI,
     functionName: 'allowance',
@@ -91,14 +93,12 @@ export default function SwapView() {
   useEffect(() => {
     if (isSuccess) {
       if (actionRef.current === 'approve') {
-        refetchAllowance()
+        queryClient.invalidateQueries()
         setApproveConfirmed(true)
         notify('Approval Confirmed', `${inSymbol} approved for AnchorFX Router`, 'success')
       }
       if (actionRef.current === 'swap') {
-        refetchAllowance()
-        refetchUsdc()
-        refetchEurc()
+        queryClient.invalidateQueries()
         const trade = {
           time: new Date().toLocaleString(),
           type: `${inSymbol} → ${outSymbol}`,
