@@ -44,16 +44,17 @@ export function useUsdcBalance() {
     query: { enabled: !!address },
   })
 
-  if (!address) return { balance: 0, formatted: '0', isLoading: false }
+  if (!address) return { balance: 0, formatted: '0', isLoading: false, refetch: () => {} }
 
   const erc20Val = typeof erc20.data === 'bigint' ? erc20.data : 0n
 
+  const nativeFormatted = formatUnits(nativeVal, 18)
+  const nativeBalance = parseFloat(nativeFormatted) || 0
+
   if (erc20Val > 0n) {
     const formatted = formatUnits(erc20Val, 6)
-    return { balance: parseFloat(formatted) || 0, formatted, value: erc20Val, isLoading: erc20.isLoading }
+    return { balance: parseFloat(formatted) || 0, formatted, value: erc20Val, isLoading: erc20.isLoading, refetch: erc20.refetch }
   }
 
-  const formatted = formatUnits(nativeVal, 18)
-  const balance = parseFloat(formatted) || 0
-  return { balance, formatted, value: nativeVal, isLoading: false }
+  return { balance: nativeBalance, formatted: nativeFormatted, value: nativeVal, isLoading: false, refetch: erc20.refetch }
 }

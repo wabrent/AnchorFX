@@ -33,8 +33,8 @@ export default function SwapView() {
   const [approveConfirmed, setApproveConfirmed] = useState(false)
   const actionRef = useRef(null)
 
-  const { balance: usdcBalance } = useUsdcBalance()
-  const { balance: eurcBalance } = useEurcBalance()
+  const { balance: usdcBalance, refetch: refetchUsdc } = useUsdcBalance()
+  const { balance: eurcBalance, refetch: refetchEurc } = useEurcBalance()
 
   const tokenIn = direction === 'usdc2eurc' ? USDC_ADDRESS : EURC_ADDRESS
   const tokenOut = direction === 'usdc2eurc' ? EURC_ADDRESS : USDC_ADDRESS
@@ -97,6 +97,8 @@ export default function SwapView() {
       }
       if (actionRef.current === 'swap') {
         refetchAllowance()
+        refetchUsdc()
+        refetchEurc()
         const trade = {
           time: new Date().toLocaleString(),
           type: `${inSymbol} → ${outSymbol}`,

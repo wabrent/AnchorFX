@@ -15,7 +15,7 @@ const BALANCE_OF_ABI = [
 export function useEurcBalance() {
   const { address } = useAccount()
 
-  const { data } = useReadContract({
+  const { data, refetch } = useReadContract({
     address: EURC_ADDRESS,
     abi: BALANCE_OF_ABI,
     functionName: 'balanceOf',
@@ -23,11 +23,11 @@ export function useEurcBalance() {
     query: { enabled: !!address },
   })
 
-  if (!address) return { balance: 0, formatted: '0', isLoading: false }
+  if (!address) return { balance: 0, formatted: '0', isLoading: false, refetch: () => {} }
 
   const value = typeof data === 'bigint' ? data : 0n
   const formatted = formatUnits(value, 6)
   const balance = parseFloat(formatted) || 0
 
-  return { balance, formatted, value, isLoading: false }
+  return { balance, formatted, value, isLoading: false, refetch }
 }
