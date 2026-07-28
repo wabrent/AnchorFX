@@ -1,15 +1,17 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'wagmi'
-import { arcTestnet as _arcTestnet } from 'viem/chains'
-
-const VERCEL_URL = import.meta.env.VITE_VERCEL_URL || 'https://arcfx-app.vercel.app'
 
 export const arcTestnet = {
-  ..._arcTestnet,
+  id: 5042002,
+  name: 'Arc Testnet',
+  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
-    ..._arcTestnet.rpcUrls,
-    default: { http: [`${VERCEL_URL}/api/rpc`] },
+    default: { http: ['https://arcfx-app.vercel.app/api/rpc'] },
   },
+  blockExplorers: {
+    default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
+  },
+  testnet: true,
 }
 
 export const USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
