@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useBalance } from 'wagmi'
-import { USDC_ADDRESS } from '../../config'
 
 const PAYMENT_TYPES = [
   { id: 'oneTime', label: 'One-Time', desc: 'Single payment link', icon: '🔗' },
@@ -18,7 +17,7 @@ export default function PaymentsView() {
   const [paymentType, setPaymentType] = useState('oneTime')
   const [memo, setMemo] = useState('')
 
-  const { data: balanceData } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
+  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
   const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   useEffect(() => {

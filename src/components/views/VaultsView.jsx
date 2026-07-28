@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAccount, useBalance } from 'wagmi'
-import { USDC_ADDRESS } from '../../config'
 
 const VAULTS = [
   {
@@ -62,7 +61,7 @@ export default function VaultsView() {
     return saved ? JSON.parse(saved) : []
   })
 
-  const { data: balanceData } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
+  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
   const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   function handleDeposit() {

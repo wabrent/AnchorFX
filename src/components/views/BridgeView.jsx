@@ -39,7 +39,7 @@ export default function BridgeView() {
 
   const { data: balanceData } = useBalance({
     address,
-    token: USDC_ADDRESSES[fromChain.id],
+    token: fromChain.id === 5042002 ? undefined : USDC_ADDRESSES[fromChain.id],
     chainId: fromChain.id,
   })
 

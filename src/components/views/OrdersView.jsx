@@ -28,7 +28,7 @@ export default function OrdersView() {
   const [approveConfirmed, setApproveConfirmed] = useState(false)
   const actionRef = useRef(null)
 
-  const { data: balanceData } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
+  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
   const { writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,

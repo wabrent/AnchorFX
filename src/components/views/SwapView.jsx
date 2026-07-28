@@ -28,7 +28,7 @@ export default function SwapView() {
     fetchEURRate().then(setRate)
   }, [])
 
-  const { data: balanceData } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
+  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
