@@ -1,12 +1,12 @@
 import { useAccount, useBalance } from 'wagmi'
 import { EURC_ADDRESS } from '../../config'
+import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 
 export default function PortfolioView() {
   const { address } = useAccount()
-  const { data: usdcBalance } = useBalance({ address, chainId: 5042002 })
+  const { balance: usdc } = useUsdcBalance()
   const { data: eurcBalance } = useBalance({ address, token: EURC_ADDRESS, chainId: 5042002 })
 
-  const usdc = usdcBalance ? parseFloat(usdcBalance.formatted) : 0
   const eurc = eurcBalance ? parseFloat(eurcBalance.formatted) : 0
 
   return (

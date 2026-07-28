@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useAccount, useBalance } from 'wagmi'
+import { useAccount } from 'wagmi'
+import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 
 const VAULTS = [
   {
@@ -61,8 +62,7 @@ export default function VaultsView() {
     return saved ? JSON.parse(saved) : []
   })
 
-  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
-  const balance = balanceData ? parseFloat(balanceData.formatted) : 0
+  const { balance } = useUsdcBalance()
 
   function handleDeposit() {
     if (!depositAmount || !selectedVault || !address) return

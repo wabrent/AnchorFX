@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useAccount, useWriteContract, useBalance, useReadContract } from 'wagmi'
+import { useAccount, useWriteContract, useReadContract } from 'wagmi'
+import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { parseUnits, maxUint256 } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
 import { useAppState } from '../../context/useAppState'
@@ -28,7 +29,7 @@ export default function OrdersView() {
   const [approveConfirmed, setApproveConfirmed] = useState(false)
   const actionRef = useRef(null)
 
-  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
+  const { balance } = useUsdcBalance()
   const { writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
@@ -113,7 +114,6 @@ export default function OrdersView() {
 
   const openOrders = orders.filter(o => o.status === 'Open')
   const filledOrders = orders.filter(o => o.status === 'Filled')
-  const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   return (
     <div className="view-section orders-view">

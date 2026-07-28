@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAccount, useBalance } from 'wagmi'
+import { useAccount } from 'wagmi'
+import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 
 const PAYMENT_TYPES = [
   { id: 'oneTime', label: 'One-Time', desc: 'Single payment link', icon: '🔗' },
@@ -17,8 +18,7 @@ export default function PaymentsView() {
   const [paymentType, setPaymentType] = useState('oneTime')
   const [memo, setMemo] = useState('')
 
-  const { data: balanceData } = useBalance({ address, chainId: 5042002 })
-  const balance = balanceData ? parseFloat(balanceData.formatted) : 0
+  const { balance } = useUsdcBalance()
 
   useEffect(() => {
     const saved = localStorage.getItem('anchorfx_payments')
