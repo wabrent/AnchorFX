@@ -39,9 +39,9 @@ const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID
 
 export const config = getDefaultConfig({
   appName: 'AnchorFX',
-  projectId: walletConnectProjectId || 'YOUR_PROJECT_ID',
+  projectId: walletConnectProjectId || '00000000000000000000000000000000',
   chains: [arcTestnet],
   transports: {
-    [arcTestnet.id]: http(),
+    [arcTestnet.id]: http('https://rpc.testnet.arc.network'),
   },
 })
