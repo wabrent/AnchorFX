@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
-import { parseUnits, maxUint256, formatUnits } from 'viem'
+import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
 import { ERC20_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
@@ -120,13 +120,15 @@ export default function SwapView() {
   function handleApprove() {
     if (!amountIn || !address) return
     actionRef.current = 'approve'
-    writeContract({
-      address: tokenIn,
-      abi: ERC20_ABI,
-      functionName: 'approve',
-      args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
-      gas: direction === 'usdc2eurc' ? 200000n : 300000n,
-    })
+      writeContract({
+        address: tokenIn,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
+        gas: 200000n,
+        maxFeePerGas: parseGwei('20'),
+        maxPriorityFeePerGas: parseGwei('1'),
+      })
     notify('Approve Submitted', `Approving ${inSymbol} spend...`, 'info')
   }
 
@@ -135,13 +137,15 @@ export default function SwapView() {
     actionRef.current = 'swap'
     const parsedRate = parseUnits(rate, 18)
 
-    writeContract({
-      address: ANCHOR_FX_ROUTER_ADDRESS,
-      abi: ANCHOR_FX_ROUTER_ABI,
-      functionName: 'swapFX',
-      args: [tokenIn, tokenOut, parsedAmount, minOutParsed, parsedRate],
-      gas: 300000n,
-    })
+      writeContract({
+        address: ANCHOR_FX_ROUTER_ADDRESS,
+        abi: ANCHOR_FX_ROUTER_ABI,
+        functionName: 'swapFX',
+        args: [tokenIn, tokenOut, parsedAmount, minOutParsed, parsedRate],
+        gas: 300000n,
+        maxFeePerGas: parseGwei('20'),
+        maxPriorityFeePerGas: parseGwei('1'),
+      })
 
     notify('Swap Submitted', `${amountIn} ${inSymbol} → ~${amountOut} ${outSymbol}`, 'info')
   }
