@@ -1,4 +1,5 @@
-import { useBalance, useReadContract, useAccount } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { useAccount, usePublicClient, useReadContract } from 'wagmi'
 import { USDC_ADDRESS } from '../config'
 import { formatUnits } from 'viem'
 
@@ -14,35 +15,37 @@ const BALANCE_OF_ABI = [
 
 export function useUsdcBalance() {
   const { address } = useAccount()
+  const publicClient = usePublicClient({ chainId: 5042002 })
+  const [nativeVal, setNativeVal] = useState(0n)
 
-  const native = useBalance({ address, chainId: 5042002 })
+  useEffect(() => {
+    if (!address || !publicClient) {
+      setNativeVal(0n)
+      return
+    }
+    let cancelled = false
+    publicClient.getBalance({ address }).then(b => {
+      if (!cancelled) setNativeVal(b)
+    }).catch(() => {
+      if (!cancelled) setNativeVal(0n)
+    })
+    return () => { cancelled = true }
+  }, [address, publicClient])
 
   const erc20 = useReadContract({
     address: USDC_ADDRESS,
     abi: BALANCE_OF_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    query: { enabled: !!address, retry: false },
+    query: { enabled: !!address },
   })
 
   if (!address) return { balance: 0, formatted: '0', isLoading: false }
 
-  const nativeVal = native.data?.value
-  const nativeFormatted = native.data?.formatted
-  const erc20Val = (typeof erc20.data === 'bigint' && erc20.data > 0n) ? erc20.data : 0n
-  const erc20Formatted = erc20Val > 0n ? formatUnits(erc20Val, 6) : null
+  const erc20Val = typeof erc20.data === 'bigint' ? erc20.data : 0n
+  const best = erc20Val > nativeVal ? erc20Val : nativeVal
+  const formatted = formatUnits(best, 6)
+  const balance = parseFloat(formatted) || 0
 
-  if (erc20Formatted) {
-    return { balance: parseFloat(erc20Formatted), formatted: erc20Formatted, isLoading: erc20.isLoading }
-  }
-
-  if (nativeFormatted && nativeVal !== undefined && nativeVal > 0n) {
-    return { balance: parseFloat(nativeFormatted), formatted: nativeFormatted, isLoading: native.isLoading }
-  }
-
-  if (erc20Val === 0n && nativeVal !== undefined) {
-    return { balance: parseFloat(nativeFormatted || '0'), formatted: nativeFormatted || '0', isLoading: native.isLoading || erc20.isLoading }
-  }
-
-  return { balance: 0, formatted: '0', isLoading: native.isLoading || erc20.isLoading }
+  return { balance, formatted, value: best, isLoading: erc20.isPending || erc20.isLoading }
 }
