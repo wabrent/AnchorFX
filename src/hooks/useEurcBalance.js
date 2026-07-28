@@ -20,7 +20,7 @@ export function useEurcBalance() {
     abi: BALANCE_OF_ABI,
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
-    query: { enabled: !!address },
+    query: { enabled: !!address, refetchInterval: 5000 },
   })
 
   if (!address) return { balance: 0, formatted: '0', isLoading: false, refetch: () => {} }
