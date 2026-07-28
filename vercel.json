@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/rpc", "destination": "https://rpc.testnet.arc.io/" }
+    { "source": "/api/rpc", "destination": "https://rpc.drpc.testnet.arc.io/" }
   ]
 }

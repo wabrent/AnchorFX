@@ -96,7 +96,7 @@ Views write data via:
 - **USDC precompile** at `0x3600...0000` provides ERC-20 interface (`balanceOf`, `transferFrom`, `approve`)
 - **EURC** is a standard ERC-20 at `0x89B5...D72a` with 6 decimals
 - **Gas** is paid in USDC (native token)
-- **CORS**: Arc RPC blocks browser requests from Vercel. Solved via `vercel.json` proxy (`/api/rpc` → `rpc.testnet.arc.io`)
+- **CORS**: Arc RPC blocks browser requests from Vercel. Solved via `vercel.json` proxy (`/api/rpc` → `rpc.drpc.testnet.arc.io`)
 
 ## Quick Start
 
@@ -127,7 +127,7 @@ Copy `.env.example` to `.env`:
 VITE_WALLETCONNECT_PROJECT_ID=your_project_id
 
 # Optional: override Arc RPC URL
-VITE_ARC_RPC_URL=https://rpc.testnet.arc.io
+VITE_ARC_RPC_URL=https://rpc.drpc.testnet.arc.io
 ```
 
 ### Build & Deploy
@@ -148,13 +148,13 @@ foundryup
 
 # Deploy to Arc Testnet
 forge create contracts/AnchorFXRouter.sol:AnchorFXRouter \
-  --rpc-url https://rpc.testnet.arc.io \
+  --rpc-url https://rpc.drpc.testnet.arc.io \
   --private-key $DEPLOYER_PRIVATE_KEY \
   --legacy
 
 # Verify on ArcScan
 forge verify-contract \
-  --rpc-url https://rpc.testnet.arc.io \
+  --rpc-url https://rpc.drpc.testnet.arc.io \
   --verifier blockscout \
   --verifier-url https://testnet.arcscan.app/api \
   0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8 \
