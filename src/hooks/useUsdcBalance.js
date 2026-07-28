@@ -5,7 +5,7 @@ import { arcTestnet, USDC_ADDRESS } from '../config'
 
 const client = createPublicClient({
   chain: arcTestnet,
-  transport: http('/api/rpc'),
+  transport: http('https://rpc.drpc.testnet.arc.io'),
 })
 
 const BALANCE_OF_ABI = [

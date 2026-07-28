@@ -2,11 +2,13 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'wagmi'
 import { arcTestnet as _arcTestnet } from 'viem/chains'
 
+const ARC_RPC = 'https://rpc.drpc.testnet.arc.io'
+
 export const arcTestnet = {
   ..._arcTestnet,
   rpcUrls: {
     ..._arcTestnet.rpcUrls,
-    default: { http: ['/api/rpc'] },
+    default: { http: [ARC_RPC] },
   },
 }
 
@@ -25,6 +27,6 @@ export const config = getDefaultConfig({
   projectId: walletConnectProjectId || '00000000000000000000000000000000',
   chains: [arcTestnet],
   transports: {
-    [arcTestnet.id]: http('/api/rpc'),
+    [arcTestnet.id]: http(ARC_RPC),
   },
 })
