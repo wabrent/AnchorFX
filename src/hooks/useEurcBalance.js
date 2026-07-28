@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAccount } from 'wagmi'
 import { createPublicClient, http, formatUnits } from 'viem'
 import { arcTestnet, EURC_ADDRESS } from '../config'
@@ -22,30 +22,36 @@ export function useEurcBalance() {
   const { address } = useAccount()
   const [value, setValue] = useState(0n)
 
+  const fetch = useCallback(async () => {
+    if (!address) return
+    try {
+      const data = await client.readContract({
+        address: EURC_ADDRESS,
+        abi: BALANCE_OF_ABI,
+        functionName: 'balanceOf',
+        args: [address],
+      })
+      setValue(data)
+    } catch {
+      // ignore errors
+    }
+  }, [address])
+
   useEffect(() => {
     if (!address) {
       setValue(0n)
       return
     }
-
-    const fetch = async () => {
-      try {
-        const data = await client.readContract({
-          address: EURC_ADDRESS,
-          abi: BALANCE_OF_ABI,
-          functionName: 'balanceOf',
-          args: [address],
-        })
-        setValue(data)
-      } catch {
-        // ignore errors
-      }
-    }
-
     fetch()
     const interval = setInterval(fetch, 5000)
     return () => clearInterval(interval)
-  }, [address])
+  }, [address, fetch])
+
+  useEffect(() => {
+    const handler = () => fetch()
+    window.addEventListener('anchorfx:refresh', handler)
+    return () => window.removeEventListener('anchorfx:refresh', handler)
+  }, [fetch])
 
   if (!address) return { balance: 0, formatted: '0' }
 

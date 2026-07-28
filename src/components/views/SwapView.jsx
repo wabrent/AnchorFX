@@ -95,6 +95,7 @@ export default function SwapView() {
     if (actionRef.current === 'approve') {
       if (receipt.status === 'success') {
         setApproveConfirmed(true)
+        window.dispatchEvent(new Event('anchorfx:refresh'))
         notify('Approval Confirmed', `${inSymbol} approved for AnchorFX Router`, 'success')
       } else {
         notify('Approval Failed', 'Transaction reverted on-chain', 'error')
@@ -114,6 +115,7 @@ export default function SwapView() {
         existing.unshift(trade)
         localStorage.setItem('anchorfx_trades', JSON.stringify(existing))
         setAmountIn('')
+        window.dispatchEvent(new Event('anchorfx:refresh'))
         notify('Swap Confirmed', `Swapped ${amountIn} ${inSymbol} → ${amountOut} ${outSymbol}`, 'success')
       } else {
         notify('Swap Failed', 'Transaction reverted on-chain. Check balance and try again.', 'error')
