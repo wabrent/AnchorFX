@@ -6,7 +6,7 @@ export const arcTestnet = {
   name: 'Arc Testnet',
   nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
   rpcUrls: {
-    default: { http: ['https://rpc.testnet.arc.network'] },
+    default: { http: ['/api/rpc'] },
   },
   blockExplorers: {
     default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
@@ -42,6 +42,6 @@ export const config = getDefaultConfig({
   projectId: walletConnectProjectId || '00000000000000000000000000000000',
   chains: [arcTestnet],
   transports: {
-    [arcTestnet.id]: http('https://rpc.testnet.arc.network'),
+    [arcTestnet.id]: http('/api/rpc'),
   },
 })
