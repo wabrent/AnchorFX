@@ -40,8 +40,8 @@ export default function SwapView() {
   const tokenOut = direction === 'usdc2eurc' ? EURC_ADDRESS : USDC_ADDRESS
   const inSymbol = direction === 'usdc2eurc' ? 'USDC' : 'EURC'
   const outSymbol = direction === 'usdc2eurc' ? 'EURC' : 'USDC'
-  const inDecimals = direction === 'usdc2eurc' ? 6 : 18
-  const outDecimals = direction === 'usdc2eurc' ? 18 : 6
+  const inDecimals = 6
+  const outDecimals = 6
   const balanceIn = direction === 'usdc2eurc' ? usdcBalance : eurcBalance
   const balanceOut = direction === 'usdc2eurc' ? eurcBalance : usdcBalance
 

@@ -26,7 +26,7 @@ export function useEurcBalance() {
   if (!address) return { balance: 0, formatted: '0', isLoading: false }
 
   const value = typeof data === 'bigint' ? data : 0n
-  const formatted = formatUnits(value, 18)
+  const formatted = formatUnits(value, 6)
   const balance = parseFloat(formatted) || 0
 
   return { balance, formatted, value, isLoading: false }

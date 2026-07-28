@@ -1,17 +1,13 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'wagmi'
+import { arcTestnet as _arcTestnet } from 'viem/chains'
 
 export const arcTestnet = {
-  id: 5042002,
-  name: 'Arc Testnet',
-  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+  ..._arcTestnet,
   rpcUrls: {
+    ..._arcTestnet.rpcUrls,
     default: { http: ['/api/rpc'] },
   },
-  blockExplorers: {
-    default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
-  },
-  testnet: true,
 }
 
 export const USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
