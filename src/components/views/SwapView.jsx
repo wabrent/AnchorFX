@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useAccount, useWriteContract, useReadContract } from 'wagmi'
-import { useQueryClient } from '@tanstack/react-query'
+import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
 import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
@@ -27,7 +26,6 @@ async function fetchRate(direction) {
 export default function SwapView() {
   const { address } = useAccount()
   const { notify } = useAppState()
-  const queryClient = useQueryClient()
   const [amountIn, setAmountIn] = useState('')
   const [direction, setDirection] = useState('usdc2eurc')
   const [rate, setRate] = useState('0.924700')
@@ -58,6 +56,7 @@ export default function SwapView() {
   }, [direction])
 
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
+  const { data: receipt } = useWaitForTransactionReceipt({ hash: writeResult })
   const { data: allowance } = useReadContract({
     address: tokenIn,
     abi: ERC20_ABI,
@@ -91,32 +90,37 @@ export default function SwapView() {
   }, [amountIn, rate, slippage, outDecimals])
 
   useEffect(() => {
-    if (isSuccess) {
-      if (actionRef.current === 'approve') {
+    if (!receipt) return
+    if (actionRef.current === 'approve') {
+      if (receipt.status === 'success') {
         setApproveConfirmed(true)
-        setTimeout(() => queryClient.refetchQueries({ type: 'active' }), 500)
         notify('Approval Confirmed', `${inSymbol} approved for AnchorFX Router`, 'success')
+      } else {
+        notify('Approval Failed', 'Transaction reverted on-chain', 'error')
       }
-      if (actionRef.current === 'swap') {
+    }
+    if (actionRef.current === 'swap') {
+      if (receipt.status === 'success') {
         const trade = {
           time: new Date().toLocaleString(),
           type: `${inSymbol} → ${outSymbol}`,
           amount: amountIn,
           rate,
           status: 'Confirmed',
-          hash: writeResult,
+          hash: receipt.transactionHash,
         }
         const existing = JSON.parse(localStorage.getItem('anchorfx_trades') || '[]')
         existing.unshift(trade)
         localStorage.setItem('anchorfx_trades', JSON.stringify(existing))
         setAmountIn('')
         notify('Swap Confirmed', `Swapped ${amountIn} ${inSymbol} → ${amountOut} ${outSymbol}`, 'success')
-        setTimeout(() => queryClient.refetchQueries({ type: 'active' }), 2000)
+      } else {
+        notify('Swap Failed', 'Transaction reverted on-chain. Check balance and try again.', 'error')
       }
-      actionRef.current = null
     }
+    actionRef.current = null
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuccess])
+  }, [receipt])
 
   function handleApprove() {
     if (!amountIn || !address) return
