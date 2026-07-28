@@ -2,7 +2,7 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { http } from 'wagmi'
 import { arcTestnet as _arcTestnet } from 'viem/chains'
 
-const VERCEL_URL = import.meta.env.VITE_VERCEL_URL || 'https://anchor-fx-self.vercel.app'
+const VERCEL_URL = import.meta.env.VITE_VERCEL_URL || 'https://arcfx-app.vercel.app'
 
 export const arcTestnet = {
   ..._arcTestnet,
