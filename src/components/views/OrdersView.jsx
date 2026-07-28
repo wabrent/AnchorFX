@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useWriteContract, useBalance, useReadContract } from 'wagmi'
 import { parseUnits, maxUint256 } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
@@ -25,10 +25,11 @@ export default function OrdersView() {
   const [limitPrice, setLimitPrice] = useState('')
   const [stopPrice, setStopPrice] = useState('')
   const [orders, setOrders] = useState([])
-  const [approved, setApproved] = useState(false)
+  const [approveConfirmed, setApproveConfirmed] = useState(false)
+  const actionRef = useRef(null)
 
   const { data: balanceData } = useBalance({ address, token: USDC_ADDRESS, chainId: 5042002 })
-  const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
+  const { writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: USDC_ADDRESS,
     abi: ERC20_ABI,
@@ -38,7 +39,8 @@ export default function OrdersView() {
   })
 
   const parsedAmount = amount ? parseUnits(amount, 6) : 0n
-  const needsApprove = side === 'sell' && !approved && allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
+  const allowanceOk = allowance !== undefined && parsedAmount > 0n && allowance >= parsedAmount
+  const needsApprove = side === 'sell' && !approveConfirmed && !allowanceOk
 
   useEffect(() => {
     const saved = localStorage.getItem('anchorfx_orders')
@@ -47,40 +49,49 @@ export default function OrdersView() {
 
   useEffect(() => {
     if (isSuccess) {
-      refetchAllowance()
-      const record = {
-        id: Date.now(),
-        time: new Date().toLocaleString(),
-        type: orderType,
-        side,
-        pair: 'USDC/EURC',
-        amount,
-        price: orderType === 'market' ? 'Market' : limitPrice || stopPrice,
-        status: orderType === 'market' ? 'Filled' : 'Open',
+      if (actionRef.current === 'approve') {
+        refetchAllowance()
+        setApproveConfirmed(true)
+        notify('Approval Confirmed', 'USDC approved for AnchorFX Router', 'success')
       }
-      const updated = [record, ...orders]
-      setOrders(updated)
-      localStorage.setItem('anchorfx_orders', JSON.stringify(updated))
-      setAmount('')
-      setApproved(false)
-      notify('Order Placed', `${side.toUpperCase()} ${amount} USDC - ${record.status}`, 'info')
+      if (actionRef.current === 'order') {
+        refetchAllowance()
+        const record = {
+          id: Date.now(),
+          time: new Date().toLocaleString(),
+          type: orderType,
+          side,
+          pair: 'USDC/EURC',
+          amount,
+          price: orderType === 'market' ? 'Market' : limitPrice || stopPrice,
+          status: orderType === 'market' ? 'Filled' : 'Open',
+        }
+        const updated = [record, ...orders]
+        setOrders(updated)
+        localStorage.setItem('anchorfx_orders', JSON.stringify(updated))
+        setAmount('')
+        notify('Order Placed', `${side.toUpperCase()} ${amount} USDC - ${record.status}`, 'success')
+      }
+      actionRef.current = null
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess])
 
   function handleApprove() {
     if (!amount || !address) return
+    actionRef.current = 'approve'
     writeContract({
       address: USDC_ADDRESS,
       abi: ERC20_ABI,
       functionName: 'approve',
       args: [ANCHOR_FX_ROUTER_ADDRESS, maxUint256],
     })
-    setApproved(true)
-    notify('Approve Submitted', 'Approving USDC spend...', 'info')
+    notify('Approve Submitted', 'Confirming USDC approval...', 'info')
   }
 
   function handleOrder() {
     if (!amount) return
+    actionRef.current = 'order'
     const parsedRate = parseUnits('0.9247', 18)
     const parsedAmt = parseUnits(amount, 6)
     const minOut = (parsedAmt * parsedRate) / BigInt(1e18)
@@ -102,7 +113,6 @@ export default function OrdersView() {
 
   const openOrders = orders.filter(o => o.status === 'Open')
   const filledOrders = orders.filter(o => o.status === 'Filled')
-  const cancelledOrders = orders.filter(o => o.status === 'Cancelled')
   const balance = balanceData ? parseFloat(balanceData.formatted) : 0
 
   return (

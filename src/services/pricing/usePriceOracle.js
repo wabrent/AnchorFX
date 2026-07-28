@@ -61,7 +61,7 @@ const ORACLE_SOURCES = {
   },
 }
 
-export function usePriceOracle(initialPairs = ['EUR/USD', 'GBP/USD', 'AUD/USD', 'USD/JPY']) {
+export function usePriceOracle() {
   const [sources, setSources] = useState({})
   const [currentPrices, setCurrentPrices] = useState({})
   const [errors, setErrors] = useState({})
@@ -110,6 +110,7 @@ export function usePriceOracle(initialPairs = ['EUR/USD', 'GBP/USD', 'AUD/USD', 
     } finally {
       setLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sources])
 
   const refreshAll = useCallback(() => {

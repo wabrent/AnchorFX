@@ -22,14 +22,15 @@ function TradingViewWidget() {
 
   useEffect(() => {
     if (!container.current) return
+    const containerEl = container.current
 
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
     script.async = true
     script.onload = () => {
-      if (typeof TradingView !== 'undefined' && container.current) {
+      if (typeof TradingView !== 'undefined' && containerEl) {
         widgetRef.current = new TradingView.widget({
-          container_id: container.current.id,
+          container_id: containerEl.id,
           symbol,
           interval: '60',
           timezone: 'Etc/UTC',
@@ -60,15 +61,16 @@ function TradingViewWidget() {
     document.head.appendChild(script)
 
     return () => {
-      const el = container.current
-      if (el) el.innerHTML = ''
+      if (containerEl) containerEl.innerHTML = ''
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (widgetRef.current && selectedPair && selectedPair !== symbol) {
       widgetRef.current.setSymbol(selectedPair)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPair])
 
   return (

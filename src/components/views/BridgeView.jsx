@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useWriteContract, useBalance, useReadContract } from 'wagmi'
 import { parseUnits, maxUint256 } from 'viem'
 import { useAppState } from '../../context/useAppState'
@@ -34,7 +34,8 @@ export default function BridgeView() {
   const [fromChain, setFromChain] = useState(CHAINS[0])
   const [toChain, setToChain] = useState(CHAINS[1])
   const [bridgeHistory, setBridgeHistory] = useState([])
-  const [approved, setApproved] = useState(false)
+  const [approveConfirmed, setApproveConfirmed] = useState(false)
+  const actionRef = useRef(null)
 
   const { data: balanceData } = useBalance({
     address,
@@ -53,7 +54,8 @@ export default function BridgeView() {
   const { writeContract, isPending, isSuccess, error } = useWriteContract()
 
   const parsedAmount = amount ? parseUnits(amount, USDC_DECIMALS) : 0n
-  const needsApprove = !approved && allowance !== undefined && parsedAmount > 0n && allowance < parsedAmount
+  const allowanceOk = allowance !== undefined && parsedAmount > 0n && allowance >= parsedAmount
+  const needsApprove = !approveConfirmed && !allowanceOk
 
   useEffect(() => {
     const saved = localStorage.getItem('anchorfx_bridges')
@@ -62,37 +64,47 @@ export default function BridgeView() {
 
   useEffect(() => {
     if (isSuccess) {
-      refetchAllowance()
-      const record = {
-        time: new Date().toLocaleString(),
-        amount: amount,
-        from: fromChain.name,
-        to: toChain.name,
-        status: 'Submitted',
-        type: 'CCTP Bridge',
+      if (actionRef.current === 'approve') {
+        refetchAllowance()
+        setApproveConfirmed(true)
+        notify('Approval Confirmed', `USDC approved on ${fromChain.name}`, 'success')
       }
-      const updated = [record, ...bridgeHistory]
-      setBridgeHistory(updated)
-      localStorage.setItem('anchorfx_bridges', JSON.stringify(updated))
-      setAmount('')
-      setApproved(false)
+      if (actionRef.current === 'bridge') {
+        refetchAllowance()
+        const record = {
+          time: new Date().toLocaleString(),
+          amount: amount,
+          from: fromChain.name,
+          to: toChain.name,
+          status: 'Submitted',
+          type: 'CCTP Bridge',
+        }
+        const updated = [record, ...bridgeHistory]
+        setBridgeHistory(updated)
+        localStorage.setItem('anchorfx_bridges', JSON.stringify(updated))
+        setAmount('')
+        notify('Bridge Submitted', `Bridging ${amount} USDC ${fromChain.name} → ${toChain.name}`, 'success')
+      }
+      actionRef.current = null
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSuccess])
 
   function handleApprove() {
     if (!amount || !address) return
+    actionRef.current = 'approve'
     writeContract({
       address: USDC_ADDRESSES[fromChain.id],
       abi: USDC_ABI,
       functionName: 'approve',
       args: [BRIDGE_ADDRESSES[fromChain.id], maxUint256],
     })
-    setApproved(true)
     notify('Approve Submitted', `Approving USDC on ${fromChain.name}...`, 'info')
   }
 
   function handleBridge() {
     if (!amount || !address) return
+    actionRef.current = 'bridge'
     writeContract({
       address: USDC_ADDRESSES[fromChain.id],
       abi: USDC_ABI,

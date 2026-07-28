@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useAppState } from '../../context/useAppState'
 
 const STRATEGIES = [
   { id: 'trend', name: 'Trend Following', description: 'Follows market momentum using EMA crossovers and RSI', icon: '📈', risk: 'Medium', winRate: 62, pairs: ['BTC/USD', 'ETH/USD', 'EUR/USD'], status: 'active' },
@@ -30,7 +29,6 @@ const PERFORMANCE = {
 }
 
 export default function AITradingView() {
-  const { notify } = useAppState()
   const [activeTab, setActiveTab] = useState('signals')
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState([
@@ -49,10 +47,6 @@ export default function AITradingView() {
         content: `This is a demo AI assistant. For real trading decisions, please:\n\n1. Use the Markets tab for live prices\n2. Use the Swap tab for on-chain swaps\n3. Use the Orders tab for limit/stop orders\n\nThe AI Trading features are under development.`
       }])
     }, 500)
-  }
-
-  function toggleStrategy(strategy) {
-    notify('Demo Mode', `${strategy.name} toggled (demo only)`, 'info')
   }
 
   return (
