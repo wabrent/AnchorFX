@@ -81,14 +81,14 @@ export default function TokenSelect({ value, onChange, tokens, disabled }) {
             position: 'absolute',
             top: 'calc(100% + 6px)',
             left: 0,
-            zIndex: 50,
-            minWidth: 200,
-            background: '#121318',
-            border: '0.5px solid rgba(255,255,255,0.12)',
+            zIndex: 9999,
+            minWidth: 210,
+            background: '#18181b',
+            border: '0.5px solid rgba(255,255,255,0.14)',
             borderRadius: 12,
             padding: 6,
-            boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(20px)',
+            boxShadow: '0 24px 70px rgba(0,0,0,0.8)',
+            opacity: 1,
           }}
         >
           {list.map(sym => {
