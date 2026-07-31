@@ -3,6 +3,7 @@ import { useAccount, useWriteContract, useReadContract, useWaitForTransactionRec
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
 import { useRouterLiquidity } from '../../hooks/useRouterLiquidity'
+import { usePythRate } from '../../hooks/usePythRate'
 import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
 import { ERC20_ABI } from '../../abis'
@@ -10,19 +11,6 @@ import { useAppState } from '../../context/useAppState'
 
 const SLIPPAGE_OPTIONS = [0.1, 0.5, 1, 3]
 const DEADLINE_MINUTES = 30
-
-async function fetchRate(direction) {
-  if (direction === 'usdc2eurc') {
-    return fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
-      .then(r => r.json())
-      .then(d => (1 / parseFloat(d.price)).toFixed(6))
-      .catch(() => '0.924700')
-  }
-  return fetch('https://api.binance.com/api/v3/ticker/price?symbol=EURUSDT')
-    .then(r => r.json())
-    .then(d => parseFloat(d.price).toFixed(6))
-    .catch(() => '1.081400')
-}
 
 export default function SwapView() {
   const { address } = useAccount()
@@ -33,6 +21,7 @@ export default function SwapView() {
   const [slippage, setSlippage] = useState(0.5)
   const [approveConfirmed, setApproveConfirmed] = useState(false)
   const actionRef = useRef(null)
+  const pyth = usePythRate()
 
   const { balance: usdcBalance } = useUsdcBalance()
   const { balance: eurcBalance } = useEurcBalance()
@@ -50,14 +39,12 @@ export default function SwapView() {
   const balanceOut = direction === 'usdc2eurc' ? eurcBalance : usdcBalance
 
   useEffect(() => {
-    fetchRate(direction).then(setRate)
-    const interval = setInterval(() => {
-      fetchRate(direction).then(r => {
-        setRate(prev => r !== prev ? r : prev)
-      })
-    }, 15000)
-    return () => clearInterval(interval)
-  }, [direction])
+    if (direction === 'usdc2eurc') {
+      setRate(pyth.usdcToEurc.toFixed(6))
+    } else {
+      setRate(pyth.eurUsd.toFixed(6))
+    }
+  }, [direction, pyth.usdcToEurc, pyth.eurUsd])
 
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: receipt } = useWaitForTransactionReceipt({ hash: writeResult })
@@ -192,7 +179,9 @@ export default function SwapView() {
       <div className="anchor-card">
         <div className="anchor-card-header">
           <span className="anchor-card-label">Exchange</span>
-          <span className="anchor-settlement" style={{ color: 'var(--green)' }}>● Live Rate</span>
+          <span className="anchor-settlement" style={{ color: pyth.error ? 'var(--red)' : 'var(--green)' }}>
+            {pyth.error ? '● Oracle Offline' : '● Pyth Oracle'}
+          </span>
         </div>
 
         <div className="anchor-swap-form">

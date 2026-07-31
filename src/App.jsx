@@ -11,6 +11,7 @@ import PortfolioView from './components/views/PortfolioView'
 import HistoryView from './components/views/HistoryView'
 import SwapView from './components/views/SwapView'
 import TradingViewWidget from './components/views/TradingViewWidget'
+import FinalityMonitor from './components/views/FinalityMonitor'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 
@@ -44,7 +45,10 @@ function Page() {
         <ErrorBoundary>
           {activeTab === 'Markets' && (
             <div className="tab-layout">
-              <MarketsView />
+              <div>
+                <FinalityMonitor />
+                <MarketsView />
+              </div>
               <div className="tv-panel">
                 <TradingViewWidget />
               </div>
