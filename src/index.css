@@ -263,7 +263,8 @@ select:focus {
 
 /* View sections */
 .view-section { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
-.view-section.swap-view-centered { max-width: 480px; padding-top: 2.5rem; }
+.view-section.swap-view-centered { max-width: 640px; padding-top: 2.5rem; }
+.swap-view-centered .anchor-card { max-width: 600px; }
 .view-head { margin-bottom: 1.5rem; }
 .view-head h2 {
   font-size: 22px; font-weight: 700; margin-bottom: 4px;
