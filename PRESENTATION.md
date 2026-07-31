@@ -1,79 +1,79 @@
-# AnchorFX — Презентация для хакатона (Google Slides / PowerPoint)
+# AnchorFX — Hackathon Presentation (Google Slides / PowerPoint)
 
-## Слайд 1 — Титульный
-- Заголовок: **AnchorFX**
-- Подзаголовок: Institutional FX & Agentic Commerce on Arc Network
-- Тестнет Arc (chainId 5042002) · USDC native gas · Субсекундная финальность
-- Треки: DeFi + Agentic Economy
-- Ссылка: arcfx-app.vercel.app (в описании)
+## Slide 1 — Title
+- Title: **AnchorFX**
+- Subtitle: Institutional FX & Agentic Commerce on Arc Network
+- Arc Testnet (chainId 5042002) · USDC native gas · Sub-second finality
+- Tracks: DeFi + Agentic Economy
+- Link: arcfx-app.vercel.app (in description)
 
-## Слайд 2 — Проблема
-- FX и платёжные потоки завязаны на банковские T+2 и централизованных посредников
-- Агенты (AI) не могут сами заключать контракты и получать расчёты без человека
-- Стабилкойны есть, но нет единого нативного слоя для FX + агентной коммерции
-- Буллеты: дорого, медленно, нет композабельности
+## Slide 2 — Problem
+- FX and payment flows are locked to bank T+2 and centralized intermediaries
+- AI agents cannot contract and settle on their own without a human in the loop
+- Stablecoins exist, but there is no single native layer for FX + agentic commerce
+- Bullets: slow, expensive, not composable
 
-## Слайд 3 — Решение
-- AnchorFX — единый слой для стейблкойн-FX и агентных расчётов на Arc
-- Свопы USDC/EURC на ончейн-роутере с ценами от оракула Pyth
-- Кроссчейн USDC через CCTP (домен 26)
-- Эскроу для AI-агентов по стандарту ERC-8183
-- Всё в USDC: газ, цены, расчёты
+## Slide 3 — Solution
+- AnchorFX is a single layer for stablecoin FX and agent settlement on Arc
+- USDC/EURC swaps on an on-chain router priced by the Pyth oracle
+- Cross-chain USDC via CCTP (domain 26)
+- Escrow for AI agents using the ERC-8183 standard
+- Everything in USDC: gas, pricing, settlement
 
-## Слайд 4 — Почему Arc
-- USDC как нативный газ — предсказуемые долларовые комиссии
-- Детерминированная финальность < 1 сек
-- Нативная интеграция с CCTP и экосистемой Circle
-- Stablecoin-native дизайн: никакого волатильного газ-токена
+## Slide 4 — Why Arc
+- USDC as native gas - predictable dollar-denominated fees
+- Deterministic finality in under a second
+- Native CCTP integration and Circle ecosystem access
+- Stablecoin-native design: no volatile gas token
 
-## Слайд 5 — DeFi: FX Своп
-- Роутер AnchorFXRouter (реально задеплоен: 0x9fd6...087)
-- Пара USDC ↔ EURC, slippage-защита, комиссия протокола 0.05%, дедлайн
-- Цены от Pyth pull-оракула (не централизованный API)
-- Ликвидность: панель депозита прямо в приложении
-- Живой Finality Monitor показывает расчёт < 1 сек
+## Slide 5 — DeFi: FX Swap
+- AnchorFXRouter (live on testnet: 0x9fd6...087)
+- USDC <-> EURC, slippage protection, 0.05% protocol fee, deadline
+- Prices from a Pyth pull oracle (not a centralized API)
+- Liquidity: deposit panel built into the app
+- Live Finality Monitor shows settlement under 1 second
 
-## Слайд 6 — DeFi: CCTP Bridge
-- Мост USDC: Ethereum Sepolia / Base Sepolia → Arc через Circle TokenMessenger
-- Реальный burn-and-mint по домену 26
-- Кнопки Approve → Bridge, статус после аттестации
-- Демонстрация кроссчейн-интероперабельности Arc
+## Slide 6 — DeFi: CCTP Bridge
+- USDC bridge: Ethereum Sepolia / Base Sepolia -> Arc via Circle TokenMessenger
+- Real burn-and-mint on domain 26
+- Approve -> Bridge flow, status after attestation
+- Showcases Arc cross-chain interoperability
 
-## Слайд 7 — Agentic Economy: ERC-8183
-- Эскроу для AI-агентов на деплойнутом референс-контракте Circle (0x0747...4583)
-- Цикл: создать задачу → бюджет → approve + fund эскроу → submit результат → complete → расчёт в USDC
-- Агент = провайдер, клиент = оценщик
-- Полный lifecycle без человека в середине
+## Slide 7 — Agentic Economy: ERC-8183
+- Escrow for AI agents on Circle's deployed reference contract (0x0747...4583)
+- Flow: create job -> set budget -> approve + fund escrow -> submit deliverable -> complete -> settle in USDC
+- Agent = provider, client = evaluator
+- Full lifecycle without a human in the middle
 
-## Слайд 8 — Архитектура
-- Фронтенд: React 19, wagmi v3, viem v2, RainbowKit
-- Смарт-контракты: Solidity 0.8.20 (solc)
-- Оракул: Pyth Hermes (pull)
-- Кроссчейн: CCTP TokenMessenger
-- Деплой: Vercel + прокси /api/rpc (CORS-обход)
+## Slide 8 — Architecture
+- Frontend: React 19, wagmi v3, viem v2, RainbowKit
+- Smart contracts: Solidity 0.8.20 (solc)
+- Oracle: Pyth Hermes (pull)
+- Cross-chain: CCTP TokenMessenger
+- Deploy: Vercel + /api/rpc proxy (CORS bypass)
 
-## Слайд 9 — Демо (живая часть)
-1. Подключение кошелька к Arc
-2. Swap USDC → EURC (Pyth курс, зелёный тост Confirmed)
-3. Finality Monitor — блоки < 1 сек
-4. Bridge Sepolia → Arc (реальные токены)
-5. Agents — создание и закрытие ERC-8183 задачи
-6. News — живая статистика сети
+## Slide 9 — Demo (live)
+1. Connect wallet to Arc
+2. Swap USDC -> EURC (Pyth rate, green "Confirmed" toast)
+3. Finality Monitor - blocks under 1 second
+4. Bridge Sepolia -> Arc (real tokens)
+5. Agents - create and close an ERC-8183 job
+6. News - live network stats
 
-## Слайд 10 — Дорожная карта
-- Сейчас: USDC/EURC своп, CCTP bridge, ERC-8183 эскроу
-- Дальше: USYC как доходный актив, deeper агентные хуки, лимитные ордера
-- Мейннет-готовность: оракул в контракте, подписанные курсы, аудит
+## Slide 10 — Roadmap
+- Now: USDC/EURC swap, CCTP bridge, ERC-8183 escrow
+- Next: USYC as a yield asset, deeper agent hooks, limit orders
+- Mainnet readiness: in-contract oracle, signed rates, audit
 
-## Слайд 11 — Спасибо / Контакты
-- Спасибо за внимание
-- Ссылка на проект (в описании/био)
-- Открыты к обратной связи от сообщества Arc
+## Slide 11 — Thank You / Contacts
+- Thank you for watching
+- Project link (in description/bio)
+- Open to feedback from the Arc community
 
 ---
 
-### Советы по стилю
-- Тёмный фон, акцент градиент зелёный→синий (как на сайте)
-- Минимум текста на слайде, больше визуалов (скриншоты вкладок Swap / Bridge / Agents)
-- Слайды 5–9 — лучше показывать живое демо, а не статичные картинки
-- Упомянуть: "контракты реально задеплоены, не мокапы"
+### Style tips
+- Dark background, green->blue gradient accents (same as the site)
+- Minimal text per slide, more visuals (screenshots of Swap / Bridge / Agents tabs)
+- Slides 5-9 - show a live demo instead of static images
+- Emphasize: "contracts are really deployed, not mockups"
