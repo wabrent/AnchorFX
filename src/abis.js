@@ -20,3 +20,31 @@ export const ANCHOR_FX_ROUTER_ABI = [
     stateMutability: 'nonpayable',
   },
 ]
+
+export const TOKEN_MESSENGER_ABI = [
+  {
+    type: 'function',
+    name: 'depositForBurn',
+    inputs: [
+      { name: 'amount', type: 'uint256' },
+      { name: 'destinationDomain', type: 'uint32' },
+      { name: 'mintRecipient', type: 'address' },
+      { name: 'burnToken', type: 'address' },
+    ],
+    outputs: [{ name: '_nonce', type: 'uint64' }],
+    stateMutability: 'nonpayable',
+  },
+  {
+    type: 'function',
+    name: 'depositForBurnWithCaller',
+    inputs: [
+      { name: 'amount', type: 'uint256' },
+      { name: 'destinationDomain', type: 'uint32' },
+      { name: 'mintRecipient', type: 'address' },
+      { name: 'burnToken', type: 'address' },
+      { name: 'destinationCaller', type: 'address' },
+    ],
+    outputs: [{ name: '_nonce', type: 'uint64' }],
+    stateMutability: 'nonpayable',
+  },
+]

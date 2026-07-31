@@ -10,6 +10,7 @@ import MarketsView from './components/views/MarketsView'
 import PortfolioView from './components/views/PortfolioView'
 import HistoryView from './components/views/HistoryView'
 import SwapView from './components/views/SwapView'
+import BridgeView from './components/views/BridgeView'
 import TradingViewWidget from './components/views/TradingViewWidget'
 import FinalityMonitor from './components/views/FinalityMonitor'
 
@@ -55,6 +56,7 @@ function Page() {
             </div>
           )}
           {activeTab === 'Swap' && <SwapView />}
+          {activeTab === 'Bridge' && <BridgeView />}
           {activeTab === 'Portfolio' && <PortfolioView />}
           {activeTab === 'History' && <HistoryView />}
         </ErrorBoundary>
