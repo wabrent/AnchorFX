@@ -13,10 +13,9 @@ export default function Navbar() {
       <div className="nav-left">
         <img
           src="/logo.png"
-          alt="AnchorFX logo"
-          style={{ width: 24, height: 24, borderRadius: 6, objectFit: 'cover' }}
+          alt="AnchorFX"
+          style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'cover' }}
         />
-        <span className="nav-logo">Anchor<span className="nav-logo-accent">FX</span></span>
         <span className="nav-badge">Arc Testnet</span>
       </div>
 
