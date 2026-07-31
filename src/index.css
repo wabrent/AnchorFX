@@ -113,16 +113,16 @@ select option { background: #121318; color: var(--text); }
 
 /* Nav */
 .nav-header {
-  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center;
   padding: 0 1.5rem; height: 60px;
   border-bottom: 0.5px solid var(--border);
   background: rgba(5,5,6,0.72); backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
-  position: sticky; top: 0; z-index: 20;
 }
-.nav-left { display: flex; align-items: center; gap: 10px; }
+.nav-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .nav-logo {
-  font-size: 19px; font-weight: 700; letter-spacing: -0.5px;
+  font-size: 19px; font-weight: 700; letter-spacing: -0.5px; white-space: nowrap;
   background: var(--grad); -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -134,18 +134,24 @@ select option { background: #121318; color: var(--text); }
   font-size: 10px; padding: 3px 9px; border-radius: 12px;
   background: rgba(107,139,255,0.12); color: var(--accent2);
   border: 0.5px solid rgba(107,139,255,0.25); text-transform: uppercase; letter-spacing: 0.3px;
+  white-space: nowrap;
 }
-.nav-tabs { display: flex; gap: 3px; padding: 3px; background: rgba(255,255,255,0.04); border: 0.5px solid var(--border); border-radius: 12px; overflow-x: auto; scrollbar-width: none; }
+.nav-tabs {
+  display: flex; gap: 2px; padding: 3px;
+  background: rgba(255,255,255,0.04); border: 0.5px solid var(--border);
+  border-radius: 12px; overflow-x: auto; scrollbar-width: none;
+}
 .nav-tab {
-  padding: 6px 14px; border: none; background: none; color: var(--text2);
+  padding: 6px 12px; border: none; background: none; color: var(--text2);
   font-size: 13px; font-weight: 500; border-radius: 9px; transition: all .18s;
+  white-space: nowrap;
 }
 .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 .nav-tab.active {
   color: #000; background: var(--grad); font-weight: 600;
   box-shadow: 0 2px 12px rgba(107,139,255,0.35);
 }
-.nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-right { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: flex-end; min-width: 0; }
 .nav-connect {
   padding: 8px 16px; background: var(--accent2); color: #000; border: none;
   border-radius: 10px; font-size: 12px; font-weight: 600; transition: opacity .15s;
