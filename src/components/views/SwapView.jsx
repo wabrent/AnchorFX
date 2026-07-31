@@ -222,7 +222,7 @@ export default function SwapView() {
                   setApproveConfirmed(false)
                 }}
                 style={{
-                  background: 'var(--s2)',
+                  backgroundColor: 'var(--s2)',
                   border: '0.5px solid var(--border)',
                   color: 'var(--text)',
                   borderRadius: 8,
@@ -295,7 +295,7 @@ export default function SwapView() {
                   setApproveConfirmed(false)
                 }}
                 style={{
-                  background: 'var(--s2)',
+                  backgroundColor: 'var(--s2)',
                   border: '0.5px solid var(--border)',
                   color: 'var(--text)',
                   borderRadius: 8,
@@ -400,7 +400,7 @@ export default function SwapView() {
               value={depositToken}
               onChange={e => { setDepositToken(e.target.value); setDepositAmount('') }}
               style={{
-                padding: '6px 8px', background: 'var(--s2)', border: '0.5px solid var(--border)',
+                padding: '6px 8px', backgroundColor: 'var(--s2)', border: '0.5px solid var(--border)',
                 borderRadius: 6, color: 'var(--text)', fontSize: 12,
               }}
             >

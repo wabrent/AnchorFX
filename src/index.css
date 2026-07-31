@@ -108,8 +108,36 @@ button { font-family: inherit; cursor: pointer; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(107,139,255,0.4); }
 
-select { cursor: pointer; }
-select option { background: #121318; color: var(--text); }
+select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9aa6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  padding-right: 26px;
+}
+select option {
+  background-color: #18181b;
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  padding: 8px;
+}
+select option:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+select option:checked {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+select:focus {
+  outline: none;
+  border-color: rgba(107,139,255,0.35);
+}
 
 /* Nav */
 .nav-header {
