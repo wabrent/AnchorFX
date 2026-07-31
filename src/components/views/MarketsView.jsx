@@ -98,10 +98,17 @@ export default function MarketsView() {
               if (!p) return null
               const flashDir = flash[s.binance]
               return (
-                <tr key={s.pair} className="mkt-row" onClick={() => {
-                  if (BINANCE_MAP[s.pair]) setSelectedPair(BINANCE_MAP[s.pair])
-                  setActiveTab('Swap')
-                }}>
+                <tr
+                  key={s.pair}
+                  className="mkt-row"
+                  onClick={() => {
+                    if (!BINANCE_MAP[s.pair]) {
+                      setSelectedPair(null)
+                      setActiveTab('Swap')
+                    }
+                  }}
+                  style={BINANCE_MAP[s.pair] ? { cursor: 'default' } : undefined}
+                >
                   <td className="mkt-pair">{s.pair}</td>
                   <td className={`mkt-price${flashDir ? ' flash-' + flashDir : ''}`}>
                     ${p.price.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: p.price < 10 ? 6 : 2 })}
@@ -116,7 +123,11 @@ export default function MarketsView() {
                   </td>
                   <td className="mkt-vol">{p.volume}</td>
                   <td>
-                    <span className="mkt-trade-btn">Trade →</span>
+                    {BINANCE_MAP[s.pair] ? (
+                      <span className="mkt-trade-btn soon" style={{ color: 'var(--text3)', background: 'var(--s3)' }}>Soon</span>
+                    ) : (
+                      <span className="mkt-trade-btn">Trade →</span>
+                    )}
                   </td>
                 </tr>
               )
