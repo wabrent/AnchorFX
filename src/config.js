@@ -8,6 +8,7 @@ export const arcTestnet = {
   nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://arcfx-app.vercel.app/api/rpc'] },
+    public: { http: ['https://arcfx-app.vercel.app/api/rpc'] },
   },
   blockExplorers: {
     default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },

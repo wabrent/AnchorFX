@@ -17,6 +17,7 @@ import TradingViewWidget from './components/views/TradingViewWidget'
 import FinalityMonitor from './components/views/FinalityMonitor'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
+import WrongNetworkBanner from './components/WrongNetworkBanner'
 
 const queryClient = new QueryClient()
 
@@ -44,6 +45,7 @@ function Page() {
   return (
     <div className="page">
       <Navbar />
+      <WrongNetworkBanner />
       <div className="page-body">
         <ErrorBoundary>
           {activeTab === 'Markets' && (
