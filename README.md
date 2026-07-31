@@ -1,182 +1,182 @@
-# AnchorFX — Institutional FX & Yield Protocol
+# AnchorFX — Institutional FX & Yield Protocol on Arc
 
-AnchorFX is a decentralized foreign exchange (FX) and liquidity protocol built on **Arc Network** (Testnet, chainId 5042002). It provides sub-second stablecoin swaps (USDC ↔ EURC) with deterministic finality.
+**Live: [arcfx-app.vercel.app](https://arcfx-app.vercel.app)**
+
+AnchorFX is a decentralized foreign exchange (FX) and agentic-commerce protocol built on **Arc Network** (Testnet, chainId 5042002). It showcases Arc's unique capabilities: sub-second deterministic finality, stablecoin-native gas (USDC), CCTP cross-chain interoperability, on-chain price oracles, and ERC-8183 agentic escrow.
+
+---
+
+## Features
+
+| Feature | Tab | What it demonstrates |
+|---------|-----|----------------------|
+| **Finality Monitor** | Markets | Live block-time chart showing Arc's `<1s` deterministic finality |
+| **Multi-asset Swap** | Swap | USDC / EURC / USYC swaps against a real on-chain router with Pyth oracle pricing |
+| **Router Liquidity** | Swap | Deposit USDC/EURC/USYC into the router to enable swaps (auto-refresh) |
+| **CCTP Bridge** | Bridge | Cross-chain USDC: Ethereum Sepolia / Base Sepolia → Arc (domain 26) |
+| **AI Agents (ERC-8183)** | Agents | Agentic escrow: create job → set budget → fund → submit → complete with USDC settlement |
+| **Portfolio** | Portfolio | Real balances of USDC / EURC / USYC + total value in USD |
+| **Trade History** | History | On-chain confirmed swaps with ArcScan links |
+
+---
+
+## Demo Walkthrough
+
+### 1. Connect wallet
+
+1. Open [arcfx-app.vercel.app](https://arcfx-app.vercel.app)
+2. Click **Connect** → pick MetaMask / OKX / WalletConnect
+3. Accept the network switch to **Arc Testnet** (chainId 5042002, RPC auto-configured via Vercel proxy)
+4. Get testnet USDC + EURC from [faucet.circle.com](https://faucet.circle.com) (select **Arc Testnet**)
+
+> ⚠️ If your wallet already has "Arc Testnet" from another source, delete that network first and reconnect — the app adds the correct RPC (`https://arcfx-app.vercel.app/api/rpc`) automatically.
+
+### 2. Swap (USDC ↔ EURC ↔ USYC)
+
+1. Go to **Swap** tab
+2. Pick token pair (default USDC → EURC). Rate comes from the **Pyth oracle** (● Pyth Oracle indicator)
+3. Enter amount. Set slippage (0.1–3%)
+4. First time: click **Approve USDC** → confirm in wallet
+5. Click **Swap USDC → EURC** → confirm
+6. Green toast **"Swap Confirmed"** = transaction settled on-chain (sub-second finality)
+7. Verify: **Portfolio** balances updated, **History** shows the trade, **ArcScan** link opens
+
+> If the router lacks liquidity for your pair, use the **Router Liquidity** panel to deposit the output token first, then swap.
+
+### 3. Bridge USDC to Arc (CCTP)
+
+1. Get USDC on **Ethereum Sepolia** ([Circle faucet](https://faucet.circle.com), network = Ethereum Sepolia) + a bit of **Sepolia ETH** for gas (e.g. [Alchemy Sepolia faucet](https://sepoliafaucet.com))
+2. Open **Bridge** tab
+3. Select **Ethereum Sepolia** (or Base Sepolia)
+4. Enter USDC amount → click **Switch to Ethereum Sepolia** → confirm in wallet
+5. Click **Approve USDC** → confirm
+6. Click **Bridge → Arc** → confirm
+7. CCTP burns USDC on Sepolia, mints it on Arc after attestation (typically <1 min)
+8. Check your USDC balance on **Portfolio** (Arc tab / switch back to Arc)
+
+### 4. AI Agents (ERC-8183 escrow)
+
+Flow: **Create Job → Set Budget → Approve + Fund → Submit → Complete**
+
+1. Go to **Agents** tab
+2. In "Provider address" put a second wallet address (you'll need it for the submit step)
+3. Click **Create Job** → confirm → note the **Job ID** from ArcScan (or type a known ID)
+4. Enter **Budget USDC** → **Set Budget**
+5. **Approve USDC** (for escrow) → then **Fund Escrow**
+6. Switch wallet to the provider role → **Submit** (deliverable string is hashed on-chain)
+7. Switch back to client/evaluator → **Complete** → escrow settles to provider
+
+The job status card shows the ERC-8183 state: `Open → Funded → Submitted → Completed`.
+
+---
 
 ## Architecture
 
 ```
-arcfx-app/
-├── contracts/              # Solidity smart contracts
-│   ├── AnchorFXRouter.sol  # FX swap router (deployed)
-│   └── ArcPerpVault.sol    # Perpetuals vault (WIP)
-├── src/
-│   ├── abis.js             # All contract ABIs
-│   ├── config.js           # Wagmi/RainbowKit config, chain, token addresses
-│   ├── main.jsx            # Entry point
-│   ├── App.jsx             # Root: providers, error boundary, notifications, routing
-│   ├── index.css           # All styles (~700 lines)
-│   ├── components/
-│   │   ├── ErrorBoundary.jsx  # React error boundary with fallback UI
-│   │   ├── Skeleton.jsx       # Loading skeleton components
-│   │   ├── Navbar.jsx         # Top navigation + RainbowKit ConnectButton
-│   │   ├── Footer.jsx         # Footer
-│   │   └── views/
-│   │       ├── MarketsView.jsx       # Live Binance prices + TradingView chart
-│   │       ├── SwapView.jsx          # Bi-directional USDC↔EURC swap with slippage
-│   │       ├── PortfolioView.jsx     # Real USDC/EURC balances + ArcScan link
-│   │       └── HistoryView.jsx       # Local swap history + ArcScan tx links
-│   ├── context/
-│   │   └── useAppState.jsx    # Tab navigation, selected pair, notifications
-│   └── hooks/
-│       ├── useUsdcBalance.js  # USDC balance via balanceOf + getBalance
-│       ├── useEurcBalance.js  # EURC balance via balanceOf (ERC-20, 18 decimals)
-│       └── useRate.js         # Rate fetching hook
-└── public/                 # Static assets (favicon, bg image)
+User Wallet (MetaMask/OKX)
+    │
+    ▼
+WagmiProvider + QueryClientProvider + RainbowKitProvider
+    │
+    ▼
+AppProvider (useAppState: tabs, notifications, selectedPair)
+    │
+    ▼
+Page → Navbar + ErrorBoundary + Views + Toasts + Footer
+
+Views:
+  Markets   → Binance 24h prices + TradingView + FinalityMonitor (block times)
+  Swap      → Pyth oracle rate + AnchorFXRouter.swapFX + Router Liquidity panel
+  Bridge    → CCTP TokenMessenger.depositForBurn (Sepolia/Base → Arc, domain 26)
+  Agents    → ERC-8183 AgenticCommerce contract (0x0747...e4583)
+  Portfolio → useTokenBalance polling (USDC/EURC/USYC)
+  History   → localStorage trades (only after receipt.status === 'success')
+
+Data paths:
+  Read   → Vercel proxy /api/rpc → rpc.drpc.testnet.arc.io
+  Write  → wallet connector (RPC from chain config = https://arcfx-app.vercel.app/api/rpc)
+  Rates  → Pyth Hermes API (EUR/USD feed)
 ```
 
-### Data Flow
+### Key files
 
-```
-User Wallet (MetaMask)
-    │
-    ▼
-WagmiProvider + RainbowKitProvider
-    │
-    ▼
-AppProvider (useAppState: activeTab, notifications, selectedPair)
-    │
-    ▼
-Page → Navbar + ErrorBoundary + Views + Notifications + Footer
-    │
-    ▼
-Views read data via:
-  - useUsdcBalance / useEurcBalance  → Arc RPC (via Vercel proxy /api/rpc)
-  - Binance API                       → Live EUR/USD rate
-  - TradingView widget                → Embedded chart
-  - localStorage                      → Trade/order history (client-side)
-    │
-    ▼
-Views write data via:
-  - useWriteContract                  → On-chain swap/approve transactions
-  - localStorage                      → Trade records after on-chain confirmation
-```
+- `contracts/AnchorFXRouter.sol` — FX swap router (pool-style: takes tokenIn, pays tokenOut from its balance)
+- `src/config.js` — chains (Arc/Sepolia/Base), token & CCTP addresses, wagmi config
+- `src/abis.js` — ERC-20, AnchorFXRouter, TokenMessenger, AgenticCommerce ABIs
+- `scripts/deploy.mjs` — compile + deploy AnchorFXRouter via solc + viem
+- `scripts/fund.mjs` — send USDC/EURC to the router (liquidity)
+- `src/hooks/useTokenBalance.js` — polling balance hook (5s + refresh event)
+- `src/hooks/usePythRate.js` — Pyth Hermes oracle rate (EUR/USD)
+- `src/components/views/FinalityMonitor.jsx` — Arc finality visualization
 
-### Swap Flow
+---
 
-1. User enters amount + selects direction (USDC→EURC or EURC→USDC)
-2. Rate fetched from Binance API (refreshes every 15s)
-3. Slippage tolerance applied (0.1% / 0.5% / 1% / 3%)
-4. User clicks **Approve** → ERC-20 `approve(router, maxUint256)` on-chain
-5. After approval confirmed, user clicks **Swap**
-6. `AnchorFXRouter.swapFX(tokenIn, tokenOut, amountIn, minAmountOut, exchangeRate)` executes:
-   - Deducts 0.05% protocol fee
-   - Calls `IERC20(tokenIn).transferFrom(user, router, amountIn)`
-   - Calls `IERC20(tokenOut).transfer(user, amountOut)`
-7. Trade saved to localStorage + ArcScan link shown
+## Deployed Contracts (Arc Testnet)
 
-## Deployed Contracts
+| Contract | Address |
+|----------|---------|
+| **AnchorFXRouter** | `0x9fd6e3907450fbaa2e18be85f8ce8400e45fb087` |
+| USDC (native precompile, ERC-20 view 6 dec) | `0x3600000000000000000000000000000000000000` |
+| EURC (ERC-20, 6 dec) | `0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a` |
+| USYC (ERC-20, 6 dec) | `0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C` |
+| AgenticCommerce (ERC-8183 ref impl) | `0x0747EEf0706327138c69792bF28Cd525089e4583` |
+| CCTP TokenMessengerV2 (Arc) | `0x8FE6B999Dc680CcFDD5Bf7EB0974218be2542DAA` |
+| Pyth (Arc Testnet) | `0x2880aB155794e7179c9eE2e38200202908C17B43` |
 
-| Contract | Network | Address |
-|----------|---------|---------|
-| AnchorFXRouter | Arc Testnet (5042002) | `0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8` |
-| USDC (native precompile) | Arc Testnet | `0x3600000000000000000000000000000000000000` |
-| EURC (ERC-20) | Arc Testnet | `0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a` |
+**Router liquidity** (needed for swaps): `10 USDC + 10 EURC` at time of writing.
 
-### AnchorFXRouter.sol
-
-- **swapFX(tokenIn, tokenOut, amountIn, minAmountOut, exchangeRate)** — Executes atomic stablecoin swap with:
-  - 0.05% protocol fee (configurable by owner, max 0.5%)
-  - Slippage protection via `minAmountOut`
-  - Events: `AnchorSwapped`, `LiquidityAdded`
-- **setFee(_feeBps)** — Owner-only fee adjustment
+---
 
 ## Arc Testnet Specifics
 
-- **Native token = USDC** (6 decimals in UI, 18 decimals at EVM level via `eth_getBalance`)
-- **USDC precompile** at `0x3600...0000` provides ERC-20 interface (`balanceOf`, `transferFrom`, `approve`)
-- **EURC** is a standard ERC-20 at `0x89B5...D72a` with 6 decimals
-- **Gas** is paid in USDC (native token)
-- **CORS**: Arc RPC blocks browser requests from Vercel. Solved via `vercel.json` proxy (`/api/rpc` → `rpc.drpc.testnet.arc.io`)
+- **Native token = USDC** (18 dec at EVM level, 6 dec ERC-20 view at `0x3600...0000`)
+- USDC native balance and ERC-20 `balanceOf` are the **same pool** — never double-count
+- **Gas is paid in USDC**; `maxFeePerGas >= 20 gwei` required
+- `estimateGas` can fail on the USDC precompile → always pass explicit `gas`
+- **CORS**: Arc RPCs block browser calls → proxied via `vercel.json` (`/api/rpc` → dRPC)
+- Wallet RPC must be an absolute URL the wallet can reach → chain config points to `https://arcfx-app.vercel.app/api/rpc`
 
-## Quick Start
+---
 
-### Prerequisites
-
-- Node.js 18+
-- MetaMask browser extension
-- USDC on Arc Testnet ([faucet](https://testnet.arc.network))
-
-### Install & Run
+## Local Development
 
 ```bash
 git clone https://github.com/wabrent/AnchorFX.git
 cd AnchorFX
-
-# Install dependencies (RainbowKit needs --legacy-peer-deps)
 npm install --legacy-peer-deps
 
-# Start dev server
+# dev server (proxies /api/rpc to dRPC via vite.config.js)
 npm run dev
+
+# production build + preview
+npm run build
+npm run preview
 ```
 
-### Environment Variables
+### Environment
 
-Copy `.env.example` to `.env`:
+Copy `.env.example` → `.env`:
+
 ```bash
-# Required for WalletConnect (QR code login)
+# WalletConnect (required for WalletConnect/QR login)
 VITE_WALLETCONNECT_PROJECT_ID=your_project_id
 
-# Optional: override Arc RPC URL
-VITE_ARC_RPC_URL=https://rpc.drpc.testnet.arc.io
+# Vercel deployment URL (used as the wallet-facing RPC endpoint)
+VITE_VERCEL_URL=https://arcfx-app.vercel.app
 ```
 
-### Build & Deploy
+### Deploying / funding the router
 
 ```bash
-npm run build    # Vite production build → dist/
-npm run preview  # Preview production build locally
+# Deploy AnchorFXRouter (reads PRIVATE_KEY from .env)
+npm run deploy:router
+
+# Send liquidity to the router: node scripts/fund.mjs <amount> [usdc|eurc]
+node scripts/fund.mjs 10        # 10 USDC
+node scripts/fund.mjs 10 eurc   # 10 EURC
 ```
 
-The project deploys automatically to Vercel from the `master` branch.
-
-## Deploying Contracts
-
-```bash
-# Install Foundry
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
-
-# Deploy to Arc Testnet
-forge create contracts/AnchorFXRouter.sol:AnchorFXRouter \
-  --rpc-url https://rpc.drpc.testnet.arc.io \
-  --private-key $DEPLOYER_PRIVATE_KEY \
-  --legacy
-
-# Verify on ArcScan
-forge verify-contract \
-  --rpc-url https://rpc.drpc.testnet.arc.io \
-  --verifier blockscout \
-  --verifier-url https://testnet.arcscan.app/api \
-  0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8 \
-  contracts/AnchorFXRouter.sol:AnchorFXRouter
-```
-
-## Testing
-
-```bash
-# Lint
-npm run lint
-
-# Build check
-npm run build
-
-# Manual test flow:
-# 1. Connect MetaMask to Arc Testnet (chainId 5042002)
-# 2. Get USDC from faucet
-# 3. Go to Swap tab → Enter amount → Approve → Swap
-# 4. Check Portfolio for updated balances
-# 5. Check History for transaction records
-```
+---
 
 ## Tech Stack
 
@@ -184,15 +184,13 @@ npm run build
 |-------|-----------|
 | Frontend | React 19, Vite 8 |
 | Web3 | wagmi v3, viem v2, RainbowKit v2 |
-| Styling | CSS (no framework) |
-| Oracles | Binance API (rate), on-chain (`balanceOf`) |
+| Oracle | Pyth Hermes (EUR/USD pull) |
+| Cross-chain | CCTP (TokenMessenger, domain 26) |
+| Agentic | ERC-8183 (AgenticCommerce) |
+| Smart Contracts | Solidity 0.8.20 (solc via npm) |
 | RPC Proxy | Vercel rewrites (`vercel.json`) |
-| Smart Contracts | Solidity 0.8.20, Foundry |
-
-## Live Demo
-
-**[anchor-fx-self.vercel.app](https://anchor-fx-self.vercel.app)**
+| Deploy | Vercel (auto from GitHub `master`) |
 
 ---
 
-*Disclaimer: AnchorFX is an independent product built on Arc Network in accordance with Circle Brand Guidelines.*
+*AnchorFX is an independent product built on Arc Network. All tokens are testnet — no real value.*
