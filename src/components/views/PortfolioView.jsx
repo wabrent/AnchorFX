@@ -1,12 +1,15 @@
 import { useAccount } from 'wagmi'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
+import { useTokenBalance } from '../../hooks/useTokenBalance'
+import { USYC_ADDRESS } from '../../config'
 import { useState, useEffect } from 'react'
 
 export default function PortfolioView() {
   const { address } = useAccount()
   const { balance: usdc } = useUsdcBalance()
   const { balance: eurc } = useEurcBalance()
+  const { balance: usyc } = useTokenBalance(USYC_ADDRESS, 6)
   const [trades, setTrades] = useState([])
 
   useEffect(() => {
@@ -16,7 +19,8 @@ export default function PortfolioView() {
 
   const usdcRate = 0.9247
   const eurcVal = eurc / usdcRate
-  const totalUsdc = usdc + eurcVal
+  const usycVal = usyc
+  const totalUsdc = usdc + eurcVal + usycVal
 
   if (!address) {
     return (
@@ -50,15 +54,15 @@ export default function PortfolioView() {
           <div className="pf-card-val">{eurc.toFixed(6)}</div>
           <div className="pf-card-sub">~${eurcVal.toFixed(2)}</div>
         </div>
+        <div className="pf-card">
+          <div className="pf-card-label">USYC Balance</div>
+          <div className="pf-card-val">{usyc.toFixed(6)}</div>
+          <div className="pf-card-sub">~${usycVal.toFixed(2)} · yield</div>
+        </div>
         <div className="pf-card" style={{ borderColor: 'var(--accent)' }}>
           <div className="pf-card-label">Total Value</div>
           <div className="pf-card-val" style={{ color: 'var(--accent)' }}>${totalUsdc.toFixed(2)}</div>
           <div className="pf-card-sub">Arc Testnet</div>
-        </div>
-        <div className="pf-card">
-          <div className="pf-card-label">Rate</div>
-          <div className="pf-card-val" style={{ fontSize: 18 }}>1 USDC = 0.9247 EURC</div>
-          <div className="pf-card-sub">Chain ID 5042002</div>
         </div>
       </div>
 

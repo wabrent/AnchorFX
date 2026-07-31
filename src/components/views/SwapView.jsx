@@ -4,19 +4,25 @@ import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
 import { useRouterLiquidity } from '../../hooks/useRouterLiquidity'
 import { usePythRate } from '../../hooks/usePythRate'
+import { useTokenBalance } from '../../hooks/useTokenBalance'
 import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
-import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
+import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS, USYC_ADDRESS } from '../../config'
 import { ERC20_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
 
 const SLIPPAGE_OPTIONS = [0.1, 0.5, 1, 3]
 const DEADLINE_MINUTES = 30
 
+const TOKENS = {
+  USDC: { address: USDC_ADDRESS, decimals: 6, label: 'USDC' },
+  EURC: { address: EURC_ADDRESS, decimals: 6, label: 'EURC' },
+  USYC: { address: USYC_ADDRESS, decimals: 6, label: 'USYC' },
+}
+
 export default function SwapView() {
   const { address } = useAccount()
   const { notify } = useAppState()
   const [amountIn, setAmountIn] = useState('')
-  const [direction, setDirection] = useState('usdc2eurc')
   const [rate, setRate] = useState('0.924700')
   const [slippage, setSlippage] = useState(0.5)
   const [approveConfirmed, setApproveConfirmed] = useState(false)
@@ -25,26 +31,29 @@ export default function SwapView() {
 
   const { balance: usdcBalance } = useUsdcBalance()
   const { balance: eurcBalance } = useEurcBalance()
+  const { balance: usycBalance } = useTokenBalance(USYC_ADDRESS, 6)
   const routerLiq = useRouterLiquidity()
   const [depositToken, setDepositToken] = useState('EURC')
   const [depositAmount, setDepositAmount] = useState('')
+  const [tokenInSel, setTokenInSel] = useState('USDC')
+  const [tokenOutSel, setTokenOutSel] = useState('EURC')
 
-  const tokenIn = direction === 'usdc2eurc' ? USDC_ADDRESS : EURC_ADDRESS
-  const tokenOut = direction === 'usdc2eurc' ? EURC_ADDRESS : USDC_ADDRESS
-  const inSymbol = direction === 'usdc2eurc' ? 'USDC' : 'EURC'
-  const outSymbol = direction === 'usdc2eurc' ? 'EURC' : 'USDC'
-  const inDecimals = 6
-  const outDecimals = 6
-  const balanceIn = direction === 'usdc2eurc' ? usdcBalance : eurcBalance
-  const balanceOut = direction === 'usdc2eurc' ? eurcBalance : usdcBalance
+  const tokenIn = TOKENS[tokenInSel].address
+  const tokenOut = TOKENS[tokenOutSel].address
+  const inSymbol = TOKENS[tokenInSel].label
+  const outSymbol = TOKENS[tokenOutSel].label
+  const inDecimals = TOKENS[tokenInSel].decimals
+  const outDecimals = TOKENS[tokenOutSel].decimals
+  const balances = { USDC: usdcBalance, EURC: eurcBalance, USYC: usycBalance }
+  const balanceIn = balances[tokenInSel] || 0
+  const balanceOut = balances[tokenOutSel] || 0
 
   useEffect(() => {
-    if (direction === 'usdc2eurc') {
-      setRate(pyth.usdcToEurc.toFixed(6))
-    } else {
-      setRate(pyth.eurUsd.toFixed(6))
-    }
-  }, [direction, pyth.usdcToEurc, pyth.eurUsd])
+    const usdIn = tokenInSel === 'EURC' ? pyth.eurUsd : 1
+    const usdOut = tokenOutSel === 'EURC' ? pyth.eurUsd : 1
+    const r = tokenInSel === tokenOutSel ? 1 : usdIn / usdOut
+    setRate(r.toFixed(6))
+  }, [tokenInSel, tokenOutSel, pyth.eurUsd])
 
   const { data: writeResult, writeContract, isPending, isSuccess, error } = useWriteContract()
   const { data: receipt } = useWaitForTransactionReceipt({ hash: writeResult })
@@ -150,7 +159,8 @@ export default function SwapView() {
   }
 
   function flipDirection() {
-    setDirection(prev => prev === 'usdc2eurc' ? 'eurc2usdc' : 'usdc2eurc')
+    setTokenInSel(tokenOutSel)
+    setTokenOutSel(tokenInSel)
     setAmountIn('')
     setApproveConfirmed(false)
   }
@@ -201,6 +211,29 @@ export default function SwapView() {
                 onChange={e => setAmountIn(e.target.value)}
                 style={{ flex: 1 }}
               />
+              <select
+                value={tokenInSel}
+                onChange={e => {
+                  setTokenInSel(e.target.value)
+                  if (e.target.value === tokenOutSel) {
+                    setTokenOutSel(tokenInSel)
+                  }
+                  setAmountIn('')
+                  setApproveConfirmed(false)
+                }}
+                style={{
+                  background: 'var(--s2)',
+                  border: '0.5px solid var(--border)',
+                  color: 'var(--text)',
+                  borderRadius: 8,
+                  padding: '0 8px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {Object.keys(TOKENS).map(sym => <option key={sym} value={sym}>{sym}</option>)}
+              </select>
               <button
                 onClick={() => setAmountIn(balanceIn > 0 ? balanceIn.toFixed(inDecimals === 6 ? 2 : 6) : '')}
                 style={{
@@ -243,13 +276,38 @@ export default function SwapView() {
                 Balance: {balanceOut.toFixed(outDecimals === 6 ? 2 : 6)} {outSymbol}
               </span>
             </div>
-            <input
-              className="anchor-input"
-              type="text"
-              readOnly
-              value={amountOut}
-              style={{ background: 'var(--s1)' }}
-            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                className="anchor-input"
+                type="text"
+                readOnly
+                value={amountOut}
+                style={{ background: 'var(--s1)', flex: 1 }}
+              />
+              <select
+                value={tokenOutSel}
+                onChange={e => {
+                  setTokenOutSel(e.target.value)
+                  if (e.target.value === tokenInSel) {
+                    setTokenInSel(tokenOutSel)
+                  }
+                  setAmountIn('')
+                  setApproveConfirmed(false)
+                }}
+                style={{
+                  background: 'var(--s2)',
+                  border: '0.5px solid var(--border)',
+                  color: 'var(--text)',
+                  borderRadius: 8,
+                  padding: '0 8px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {Object.keys(TOKENS).map(sym => <option key={sym} value={sym}>{sym}</option>)}
+              </select>
+            </div>
             <span className="anchor-input-hint">{outSymbol} (estimated)</span>
           </div>
 
@@ -348,6 +406,7 @@ export default function SwapView() {
             >
               <option value="EURC">EURC</option>
               <option value="USDC">USDC</option>
+              <option value="USYC">USYC</option>
             </select>
             <input
               className="anchor-input"
@@ -358,7 +417,10 @@ export default function SwapView() {
               style={{ flex: 1, padding: '6px 10px', fontSize: 12 }}
             />
             <button
-              onClick={() => setDepositAmount(depositToken === 'EURC' ? (eurcBalance > 0 ? eurcBalance.toFixed(6) : '') : (usdcBalance > 0 ? usdcBalance.toFixed(6) : ''))}
+              onClick={() => {
+                const b = { EURC: eurcBalance, USDC: usdcBalance, USYC: usycBalance }[depositToken] || 0
+                setDepositAmount(b > 0 ? b.toFixed(6) : '')
+              }}
               style={{
                 padding: '6px 12px', background: 'var(--s2)', border: '0.5px solid var(--border)',
                 color: 'var(--accent)', borderRadius: 6, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap',
@@ -368,8 +430,8 @@ export default function SwapView() {
               onClick={() => {
                 const amt = parseFloat(depositAmount)
                 if (!depositAmount || amt <= 0) return
-                const addr = depositToken === 'EURC' ? EURC_ADDRESS : USDC_ADDRESS
-                const bal = depositToken === 'EURC' ? eurcBalance : usdcBalance
+                const addr = { EURC: EURC_ADDRESS, USDC: USDC_ADDRESS, USYC: USYC_ADDRESS }[depositToken]
+                const bal = { EURC: eurcBalance, USDC: usdcBalance, USYC: usycBalance }[depositToken] || 0
                 if (amt > bal) { notify('Deposit Failed', 'Insufficient balance', 'error'); return }
                 writeContract({
                   address: addr,
