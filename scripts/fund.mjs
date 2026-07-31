@@ -21,7 +21,7 @@ if (existsSync('.env')) {
 const pk = process.env.PRIVATE_KEY
 if (!pk) { console.error('No PRIVATE_KEY in .env'); process.exit(1) }
 
-const USDC = '0x3600000000000000000000000000000000000000'
+const EURC = '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a'
 const ROUTER = '0x9fd6e3907450fbaa2e18be85f8ce8400e45fb087'
 const AMOUNT = process.argv[2] || '10'
 
@@ -29,9 +29,9 @@ const account = privateKeyToAccount(pk)
 const walletClient = createWalletClient({ account, chain: arcTestnet, transport: http(RPC) })
 const publicClient = createPublicClient({ chain: arcTestnet, transport: http(RPC) })
 
-console.log('Sending', AMOUNT, 'USDC from', account.address, 'to router', ROUTER)
+console.log('Sending', AMOUNT, 'EURC from', account.address, 'to router', ROUTER)
 const hash = await walletClient.writeContract({
-  address: USDC,
+  address: EURC,
   abi: [{ type: 'function', name: 'transfer', inputs: [{ name: 'to', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }], stateMutability: 'nonpayable' }],
   functionName: 'transfer',
   args: [ROUTER, parseUnits(AMOUNT, 6)],
