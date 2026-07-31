@@ -11,6 +11,12 @@
   100% { transform: translate(0, 0) scale(1); }
 }
 
+@keyframes ken-burns {
+  0% { transform: scale(1.05) translate(0, 0); }
+  50% { transform: scale(1.18) translate(-1.5%, -1%); }
+  100% { transform: scale(1.05) translate(0, 0); }
+}
+
 @keyframes skeleton-shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
@@ -81,20 +87,19 @@ body {
 }
 
 body::before {
-  content: ''; position: fixed; inset: 0; z-index: -2;
-  background:
-    radial-gradient(600px 400px at 15% 10%, rgba(107,139,255,0.16), transparent 70%),
-    radial-gradient(700px 500px at 85% 20%, rgba(0,229,160,0.12), transparent 70%),
-    radial-gradient(800px 600px at 50% 100%, rgba(167,139,250,0.12), transparent 70%),
-    var(--bg);
+  content: ''; position: fixed; inset: 0; z-index: -3;
+  background: url('/bg.jpg') center / cover fixed;
+  animation: ken-burns 30s ease-in-out infinite;
+  will-change: transform;
 }
 
 body::after {
-  content: ''; position: fixed; inset: 0; z-index: -1;
+  content: ''; position: fixed; inset: 0; z-index: -2;
   background:
-    radial-gradient(500px 500px at 25% 30%, rgba(107,139,255,0.10), transparent 65%),
-    radial-gradient(500px 500px at 75% 60%, rgba(0,229,160,0.08), transparent 65%);
-  filter: blur(60px);
+    radial-gradient(600px 400px at 15% 10%, rgba(107,139,255,0.14), transparent 70%),
+    radial-gradient(700px 500px at 85% 20%, rgba(0,229,160,0.10), transparent 70%),
+    radial-gradient(800px 600px at 50% 100%, rgba(167,139,250,0.10), transparent 70%),
+    rgba(3,3,5,0.74);
   animation: aurora 18s ease-in-out infinite;
   pointer-events: none;
 }
