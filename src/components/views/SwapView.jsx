@@ -374,19 +374,12 @@ export default function SwapView() {
           <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>
             Contract needs both tokens to execute swaps. Deposit to enable trading.
           </div>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            <select
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
+            <TokenSelect
               value={depositToken}
-              onChange={e => { setDepositToken(e.target.value); setDepositAmount('') }}
-              style={{
-                padding: '6px 8px', backgroundColor: 'var(--s2)', border: '0.5px solid var(--border)',
-                borderRadius: 6, color: 'var(--text)', fontSize: 12,
-              }}
-            >
-              <option value="EURC">EURC</option>
-              <option value="USDC">USDC</option>
-              <option value="USYC">USYC</option>
-            </select>
+              tokens={Object.keys(TOKENS)}
+              onChange={e => { setDepositToken(e); setDepositAmount('') }}
+            />
             <input
               className="anchor-input"
               type="number"
