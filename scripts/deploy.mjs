@@ -1,9 +1,16 @@
 import { readFileSync, existsSync } from 'node:fs'
-import { createWalletClient, createPublicClient, http } from 'viem'
+import { createWalletClient, createPublicClient, http, defineChain } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { arcTestnet } from '../src/config.js'
 
 const RPC = 'https://rpc.drpc.testnet.arc.io'
+
+const arcTestnet = defineChain({
+  id: 5042002,
+  name: 'Arc Testnet',
+  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+  rpcUrls: { default: { http: [RPC] } },
+  testnet: true,
+})
 
 if (existsSync('.env')) {
   for (const line of readFileSync('.env', 'utf8').split('\n')) {
