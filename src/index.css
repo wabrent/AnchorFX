@@ -268,8 +268,8 @@ select:focus {
 
 /* View sections */
 .view-section { padding: 1.5rem; max-width: 960px; margin: 0 auto; }
-.view-section.swap-view-centered { max-width: 640px; padding-top: 2.5rem; }
-.swap-view-centered .anchor-card { max-width: 600px; }
+.view-section.swap-view-centered { max-width: 480px; padding-top: 2.5rem; }
+.swap-view-centered .anchor-card { max-width: 440px; }
 .view-head { margin-bottom: 1.5rem; }
 .view-head h2 {
   font-size: 22px; font-weight: 700; margin-bottom: 4px;
@@ -356,7 +356,7 @@ tr:hover .mkt-trade-btn { background: var(--accent2); color: #000; border-color:
   padding: 1.5rem;
   box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  position: relative; overflow: hidden;
+  position: relative;
 }
 .anchor-card::before {
   content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: 1px;

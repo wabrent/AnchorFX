@@ -8,6 +8,7 @@ const TOKEN_META = {
 
 export default function TokenSelect({ value, onChange, tokens, disabled }) {
   const [open, setOpen] = useState(false)
+  const [openUp, setOpenUp] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
@@ -18,6 +19,16 @@ export default function TokenSelect({ value, onChange, tokens, disabled }) {
     return () => document.removeEventListener('mousedown', onDocClick)
   }, [])
 
+  function toggle() {
+    const next = !open
+    if (next && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      setOpenUp(spaceBelow < 170)
+    }
+    setOpen(next)
+  }
+
   const list = tokens || Object.keys(TOKEN_META)
   const meta = TOKEN_META[value] || {}
 
@@ -26,7 +37,7 @@ export default function TokenSelect({ value, onChange, tokens, disabled }) {
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setOpen(o => !o)}
+        onClick={toggle}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -79,7 +90,8 @@ export default function TokenSelect({ value, onChange, tokens, disabled }) {
         <div
           style={{
             position: 'absolute',
-            top: 'calc(100% + 6px)',
+            top: openUp ? 'auto' : 'calc(100% + 6px)',
+            bottom: openUp ? 'calc(100% + 6px)' : 'auto',
             left: 0,
             zIndex: 9999,
             minWidth: 210,
