@@ -367,6 +367,10 @@ export default function SwapView() {
             <button className="anchor-swap-btn" disabled style={{ background: 'var(--s3)', color: 'var(--red)', cursor: 'not-allowed' }}>
               Insufficient {inSymbol} Balance
             </button>
+          ) : routerLiq[tokenOutSel] <= 0 ? (
+            <button className="anchor-swap-btn" disabled style={{ background: 'var(--s3)', color: 'var(--text3)', cursor: 'not-allowed' }}>
+              Router has no {outSymbol} — deposit via Router Liquidity
+            </button>
           ) : needsApprove ? (
             <button className="anchor-swap-btn" onClick={handleApprove} disabled={isPending}>
               {isPending ? 'Approving...' : `Approve ${inSymbol}`}
