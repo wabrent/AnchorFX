@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useUsdcBalance } from '../../hooks/useUsdcBalance'
 import { useEurcBalance } from '../../hooks/useEurcBalance'
+import { useRouterLiquidity } from '../../hooks/useRouterLiquidity'
 import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS } from '../../config'
 import { ERC20_ABI } from '../../abis'
@@ -35,6 +36,9 @@ export default function SwapView() {
 
   const { balance: usdcBalance } = useUsdcBalance()
   const { balance: eurcBalance } = useEurcBalance()
+  const routerLiq = useRouterLiquidity()
+  const [depositToken, setDepositToken] = useState('EURC')
+  const [depositAmount, setDepositAmount] = useState('')
 
   const tokenIn = direction === 'usdc2eurc' ? USDC_ADDRESS : EURC_ADDRESS
   const tokenOut = direction === 'usdc2eurc' ? EURC_ADDRESS : USDC_ADDRESS
@@ -334,29 +338,67 @@ export default function SwapView() {
           )}
         </div>
 
-        <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--s1)', borderRadius: 10, border: '0.5px solid var(--border)' }}>
-          <p style={{ fontSize: 11, color: 'var(--accent2)', margin: 0 }}>
-            Router needs EURC liquidity. Send some to enable swaps.
-          </p>
-          <button
-            style={{
-              marginTop: 6, padding: '5px 14px', background: 'var(--accent2)', color: '#000',
-              border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            }}
-            onClick={() => {
-              if (eurcBalance <= 0) return
-              writeContract({
-                address: EURC_ADDRESS,
-                abi: ERC20_ABI,
-                functionName: 'transfer',
-                args: [ANCHOR_FX_ROUTER_ADDRESS, parseUnits(eurcBalance.toFixed(6), 6)],
-                gas: 200000n,
-                maxFeePerGas: parseGwei('20'),
-                maxPriorityFeePerGas: parseGwei('1'),
-              })
-              notify('Funding Router', `Sending ${eurcBalance.toFixed(6)} EURC to router`, 'info')
-            }}
-          >Send All EURC to Router</button>
+        <div style={{ marginTop: 14, padding: '12px 14px', background: 'var(--s1)', borderRadius: 10, border: '0.5px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>Router Liquidity</span>
+            <span style={{ fontSize: 11, color: 'var(--text2)', fontFamily: 'DM Mono, monospace' }}>
+              {routerLiq.usdc.toFixed(2)} USDC · {routerLiq.eurc.toFixed(2)} EURC
+            </span>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 8 }}>
+            Contract needs both tokens to execute swaps. Deposit to enable trading.
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <select
+              value={depositToken}
+              onChange={e => { setDepositToken(e.target.value); setDepositAmount('') }}
+              style={{
+                padding: '6px 8px', background: 'var(--s2)', border: '0.5px solid var(--border)',
+                borderRadius: 6, color: 'var(--text)', fontSize: 12,
+              }}
+            >
+              <option value="EURC">EURC</option>
+              <option value="USDC">USDC</option>
+            </select>
+            <input
+              className="anchor-input"
+              type="number"
+              placeholder="Amount"
+              value={depositAmount}
+              onChange={e => setDepositAmount(e.target.value)}
+              style={{ flex: 1, padding: '6px 10px', fontSize: 12 }}
+            />
+            <button
+              onClick={() => setDepositAmount(depositToken === 'EURC' ? (eurcBalance > 0 ? eurcBalance.toFixed(6) : '') : (usdcBalance > 0 ? usdcBalance.toFixed(6) : ''))}
+              style={{
+                padding: '6px 12px', background: 'var(--s2)', border: '0.5px solid var(--border)',
+                color: 'var(--accent)', borderRadius: 6, fontSize: 11, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >MAX</button>
+            <button
+              onClick={() => {
+                const amt = parseFloat(depositAmount)
+                if (!depositAmount || amt <= 0) return
+                const addr = depositToken === 'EURC' ? EURC_ADDRESS : USDC_ADDRESS
+                const bal = depositToken === 'EURC' ? eurcBalance : usdcBalance
+                if (amt > bal) { notify('Deposit Failed', 'Insufficient balance', 'error'); return }
+                writeContract({
+                  address: addr,
+                  abi: ERC20_ABI,
+                  functionName: 'transfer',
+                  args: [ANCHOR_FX_ROUTER_ADDRESS, parseUnits(depositAmount, 6)],
+                  gas: 200000n,
+                  maxFeePerGas: parseGwei('20'),
+                  maxPriorityFeePerGas: parseGwei('1'),
+                })
+                notify('Deposit Submitted', `Sending ${depositAmount} ${depositToken} to router`, 'info')
+              }}
+              style={{
+                padding: '6px 14px', background: 'var(--accent2)', color: '#000',
+                border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >Deposit</button>
+          </div>
         </div>
       </div>
     </div>
