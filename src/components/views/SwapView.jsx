@@ -9,6 +9,7 @@ import { parseUnits, maxUint256, formatUnits, parseGwei } from 'viem'
 import { ANCHOR_FX_ROUTER_ADDRESS, ANCHOR_FX_ROUTER_ABI, USDC_ADDRESS, EURC_ADDRESS, USYC_ADDRESS } from '../../config'
 import { ERC20_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
+import TokenSelect from '../TokenSelect'
 
 const SLIPPAGE_OPTIONS = [0.1, 0.5, 1, 3]
 const DEADLINE_MINUTES = 30
@@ -211,29 +212,16 @@ export default function SwapView() {
                 onChange={e => setAmountIn(e.target.value)}
                 style={{ flex: 1 }}
               />
-              <select
+              <TokenSelect
                 value={tokenInSel}
+                tokens={Object.keys(TOKENS)}
                 onChange={e => {
-                  setTokenInSel(e.target.value)
-                  if (e.target.value === tokenOutSel) {
-                    setTokenOutSel(tokenInSel)
-                  }
+                  setTokenInSel(e)
+                  if (e === tokenOutSel) setTokenOutSel(tokenInSel)
                   setAmountIn('')
                   setApproveConfirmed(false)
                 }}
-                style={{
-                  backgroundColor: 'var(--s2)',
-                  border: '0.5px solid var(--border)',
-                  color: 'var(--text)',
-                  borderRadius: 8,
-                  padding: '0 8px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {Object.keys(TOKENS).map(sym => <option key={sym} value={sym}>{sym}</option>)}
-              </select>
+              />
               <button
                 onClick={() => setAmountIn(balanceIn > 0 ? balanceIn.toFixed(inDecimals === 6 ? 2 : 6) : '')}
                 style={{
@@ -284,29 +272,16 @@ export default function SwapView() {
                 value={amountOut}
                 style={{ background: 'var(--s1)', flex: 1 }}
               />
-              <select
+              <TokenSelect
                 value={tokenOutSel}
+                tokens={Object.keys(TOKENS)}
                 onChange={e => {
-                  setTokenOutSel(e.target.value)
-                  if (e.target.value === tokenInSel) {
-                    setTokenInSel(tokenOutSel)
-                  }
+                  setTokenOutSel(e)
+                  if (e === tokenInSel) setTokenInSel(tokenOutSel)
                   setAmountIn('')
                   setApproveConfirmed(false)
                 }}
-                style={{
-                  backgroundColor: 'var(--s2)',
-                  border: '0.5px solid var(--border)',
-                  color: 'var(--text)',
-                  borderRadius: 8,
-                  padding: '0 8px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {Object.keys(TOKENS).map(sym => <option key={sym} value={sym}>{sym}</option>)}
-              </select>
+              />
             </div>
             <span className="anchor-input-hint">{outSymbol} (estimated)</span>
           </div>

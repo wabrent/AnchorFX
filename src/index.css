@@ -371,6 +371,20 @@ tr:hover .mkt-trade-btn { background: var(--accent2); color: #000; border-color:
   width: 100%; background: none; border: none; outline: none;
   color: var(--text); font-size: 24px; font-family: 'DM Mono', monospace; padding: 4px 0;
 }
+.anchor-input-sm {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid var(--border);
+  outline: none;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: border-color .15s;
+}
+.anchor-input-sm:focus { border-color: rgba(107,139,255,0.35); }
+.anchor-input-sm::placeholder { color: var(--text3); }
 .anchor-input::placeholder { color: var(--text3); }
 .anchor-input-hint { font-size: 11px; color: var(--text3); }
 .anchor-rate { text-align: center; font-size: 12px; color: var(--text2); padding: 4px 0; }

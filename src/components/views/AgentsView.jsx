@@ -87,7 +87,7 @@ export default function AgentsView() {
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <input
-            className="anchor-input"
+            className="anchor-input-sm"
             type="number"
             placeholder="Job ID (after creation)"
             value={jobId}
@@ -117,7 +117,7 @@ export default function AgentsView() {
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input
-            className="anchor-input"
+            className="anchor-input-sm"
             type="text"
             placeholder="Provider address"
             value={provider}
@@ -140,7 +140,7 @@ export default function AgentsView() {
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input
-            className="anchor-input"
+            className="anchor-input-sm"
             type="number"
             placeholder="Budget USDC"
             value={budget}
@@ -193,7 +193,7 @@ export default function AgentsView() {
 
         <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
           <input
-            className="anchor-input"
+            className="anchor-input-sm"
             type="text"
             placeholder="Deliverable string (hashed)"
             value={deliverable}

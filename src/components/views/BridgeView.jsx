@@ -156,7 +156,7 @@ export default function BridgeView() {
         </div>
 
         <input
-          className="anchor-input"
+          className="anchor-input-sm"
           type="number"
           placeholder="Amount (USDC)"
           value={amount}
