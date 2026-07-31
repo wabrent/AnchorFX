@@ -8,8 +8,8 @@ import {
   useWaitForTransactionReceipt,
   useBalance,
 } from 'wagmi'
-import { parseUnits, maxUint256, parseGwei, formatUnits } from 'viem'
-import { BRIDGE_SOURCES, ARC_CCTP_DOMAIN, USDC_ADDRESS } from '../../config'
+import { parseUnits, maxUint256, parseGwei } from 'viem'
+import { BRIDGE_SOURCES, ARC_CCTP_DOMAIN } from '../../config'
 import { ERC20_ABI, TOKEN_MESSENGER_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
 
