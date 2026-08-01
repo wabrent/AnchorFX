@@ -176,6 +176,39 @@ node scripts/fund.mjs 10        # 10 USDC
 node scripts/fund.mjs 10 eurc   # 10 EURC
 ```
 
+### Autonomous AI agent demo
+
+```bash
+# Runs a full ERC-8183 job lifecycle with zero human clicks:
+# client funds provider -> createJob -> setBudget -> approve+fund -> submit -> complete
+npm run agent
+```
+
+The agent generates a throwaway provider wallet, funds it with USDC, posts a job,
+and settles it — everything signed by code, settled in USDC on Arc.
+
+---
+
+## Hackathon Submission (Build on Arc)
+
+**Tracks:** DeFi + Agentic Economy (both met).
+
+| Requirement (final checkpoint) | Status |
+|--------------------------------|--------|
+| Functional MVP deployed on Arc | ✅ `arcfx-app.vercel.app` (AnchorFXRouter live at `0x9fd6...087`) |
+| Public code repo | ✅ [github.com/wabrent/AnchorFX](https://github.com/wabrent/AnchorFX) |
+| Deck | ✅ `public/slides.html` + `PRESENTATION.md` |
+| 3-min video pitch + demo | ✅ Script in `VIDEO_SCRIPT.md` |
+| Meaningful Arc + USDC use | ✅ USDC as gas, sub-second finality, CCTP |
+| DeFi: swap / FX / liquidity / CCTP | ✅ Router + Pyth oracle + bridge |
+| Agentic: agents pay/settle in USDC | ✅ ERC-8183 escrow + autonomous `npm run agent` |
+
+**Useful links**
+- App: `https://arcfx-app.vercel.app`
+- Deck: `https://arcfx-app.vercel.app/slides.html`
+- Connection test: `https://arcfx-app.vercel.app/connect-test.html`
+- Contracts: AnchorFXRouter `0x9fd6e3907450fbaa2e18be85f8ce8400e45fb087`
+
 ---
 
 ## Tech Stack
@@ -183,7 +216,7 @@ node scripts/fund.mjs 10 eurc   # 10 EURC
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 19, Vite 8 |
-| Web3 | wagmi v3, viem v2, RainbowKit v2 |
+| Web3 | wagmi v2, viem v2, RainbowKit v2 |
 | Oracle | Pyth Hermes (EUR/USD pull) |
 | Cross-chain | CCTP (TokenMessenger, domain 26) |
 | Agentic | ERC-8183 (AgenticCommerce) |
