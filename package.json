@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy:router": "node scripts/deploy.mjs"
+    "deploy:router": "node scripts/deploy.mjs",
+    "fund": "node scripts/fund.mjs",
+    "agent": "node scripts/agent.mjs"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.11",
