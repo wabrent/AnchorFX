@@ -187,6 +187,27 @@ npm run agent
 The agent generates a throwaway provider wallet, funds it with USDC, posts a job,
 and settles it — everything signed by code, settled in USDC on Arc.
 
+### Circle Agent Stack alignment
+
+AnchorFX is built to sit alongside Circle's Agent Stack — the agent-facing layer
+for autonomous USDC flows:
+
+- **Agent Wallets** — our `npm run agent` demo is a minimal agent wallet: a
+  throwaway keypair that holds USDC, funds escrow and settles, with a spending
+  cap (the job budget). Replace the raw key with a Circle Agent Wallet for
+  gasless, policy-controlled spending.
+- **Circle CLI / Skills** — build the agent flows here with the same primitives
+  (`circle skill add`, agent-nanopayments) that give AI agents wallets and
+  payments. See [developers.circle.com/agent-stack](https://developers.circle.com/agent-stack).
+- **Nanopayments (x402)** — the natural next step: let the agent pay per
+  request to x402-compatible APIs, gasless, in USDC.
+- **ERC-8183** — job escrow is the contract layer beneath the stack, so an
+  agent can contract and settle without a human.
+
+Upgrade path: point the agent at a Circle Agent Wallet (with spending policy),
+then add x402 nanopayments for service calls — both are drop-in on top of the
+existing swap router and CCTP bridge.
+
 ---
 
 ## Hackathon Submission (Build on Arc)
