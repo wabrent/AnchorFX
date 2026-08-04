@@ -49,6 +49,39 @@ export const TOKEN_MESSENGER_ABI = [
   },
 ]
 
+export const ERC8004_IDENTITY_ABI = [
+  { type: 'function', name: 'register', stateMutability: 'nonpayable', inputs: [{ name: 'metadataURI', type: 'string' }], outputs: [] },
+  { type: 'function', name: 'ownerOf', stateMutability: 'view', inputs: [{ name: 'tokenId', type: 'uint256' }], outputs: [{ name: '', type: 'address' }] },
+  { type: 'function', name: 'tokenURI', stateMutability: 'view', inputs: [{ name: 'tokenId', type: 'uint256' }], outputs: [{ name: '', type: 'string' }] },
+]
+
+export const ERC8004_REPUTATION_ABI = [
+  { type: 'function', name: 'giveFeedback', stateMutability: 'nonpayable', inputs: [
+    { name: 'agentId', type: 'uint256' },
+    { name: 'score', type: 'int128' },
+    { name: 'vertical', type: 'uint8' },
+    { name: 'tag', type: 'string' },
+    { name: 'schema', type: 'string' },
+    { name: 'reference', type: 'string' },
+    { name: 'metadata', type: 'string' },
+    { name: 'feedbackHash', type: 'bytes32' },
+  ], outputs: [] },
+]
+
+export const ERC8004_VALIDATION_ABI = [
+  { type: 'function', name: 'validationRequest', stateMutability: 'nonpayable', inputs: [
+    { name: 'validator', type: 'address' }, { name: 'agentId', type: 'uint256' },
+    { name: 'requestURI', type: 'string' }, { name: 'requestHash', type: 'bytes32' }], outputs: [] },
+  { type: 'function', name: 'validationResponse', stateMutability: 'nonpayable', inputs: [
+    { name: 'requestHash', type: 'bytes32' }, { name: 'response', type: 'uint8' },
+    { name: 'schema', type: 'string' }, { name: 'responseHash', type: 'bytes32' },
+    { name: 'tag', type: 'string' }], outputs: [] },
+  { type: 'function', name: 'getValidationStatus', stateMutability: 'view', inputs: [{ name: 'requestHash', type: 'bytes32' }], outputs: [
+    { name: 'validatorAddress', type: 'address' }, { name: 'agentId', type: 'uint256' },
+    { name: 'response', type: 'uint8' }, { name: 'responseHash', type: 'bytes32' },
+    { name: 'tag', type: 'string' }, { name: 'lastUpdate', type: 'uint256' }] },
+]
+
 export const AGENTIC_COMMERCE_ABI = [
   {
     type: 'function',

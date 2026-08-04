@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react'
 import { useAccount, useWriteContract, useReadContract, useWaitForTransactionReceipt } from 'wagmi'
 import { parseUnits, parseGwei, keccak256, stringToHex, zeroAddress } from 'viem'
 import { USDC_ADDRESS } from '../../config'
-import { ERC20_ABI, AGENTIC_COMMERCE_ABI } from '../../abis'
+import { ERC20_ABI, AGENTIC_COMMERCE_ABI, ERC8004_IDENTITY_ABI } from '../../abis'
 import { useAppState } from '../../context/useAppState'
 
 const AGENTIC_CONTRACT = '0x0747EEf0706327138c69792bF28Cd525089e4583'
+const IDENTITY_REGISTRY = '0x8004A818BFB912233c491871b3d84c89A494BD9e'
+const AGENT_METADATA_URI = 'ipfs://bafkreibdi6623n3xpf7ymk62ckb4bo75o3qemwkpfvp5i25j66itxvsoei'
 const STATUS_NAMES = ['Open', 'Funded', 'Submitted', 'Completed', 'Rejected', 'Expired']
 
 export default function AgentsView() {
@@ -17,6 +19,7 @@ export default function AgentsView() {
   const [budget, setBudget] = useState('5')
   const [deliverable, setDeliverable] = useState('anchorfx-deliverable-v1')
   const [approved, setApproved] = useState(false)
+  const [agentId, setAgentId] = useState('')
   const actionRef = useRef(null)
 
   const { data: writeResult, writeContract, isPending } = useWriteContract()
@@ -44,6 +47,20 @@ export default function AgentsView() {
         notify('Approval Confirmed', 'AgenticCommerce approved for USDC', 'success')
       } else {
         notify('Approval Failed', 'Transaction reverted', 'error')
+      }
+    } else if (actionRef.current === 'register') {
+      if (receipt.status === 'success') {
+        const topic = keccak256(stringToHex('Transfer(address,address,uint256)'))
+        const log = receipt.logs.find(l => l.topics[0] === topic)
+        if (log && log.topics[3]) {
+          const id = BigInt(log.topics[3]).toString()
+          setAgentId(id)
+          notify('Agent Registered', `Identity NFT minted · Agent ID ${id}`, 'success')
+        } else {
+          notify('Agent Registered', 'Identity NFT minted', 'success')
+        }
+      } else {
+        notify('Registration Failed', 'Transaction reverted', 'error')
       }
     } else {
       const label = {
@@ -76,7 +93,31 @@ export default function AgentsView() {
     <div className="view-section">
       <div className="view-head">
         <h2>AI Agents</h2>
-        <span className="view-sub">ERC-8183 · Agentic escrow with USDC settlement</span>
+        <span className="view-sub">ERC-8004 identity · ERC-8183 escrow with USDC settlement</span>
+      </div>
+
+      <div className="anchor-card" style={{ marginBottom: 16, maxWidth: 560 }}>
+        <div className="anchor-card-header">
+          <span className="anchor-card-label">Agent Identity · ERC-8004</span>
+          <span className="anchor-settlement" style={{ color: 'var(--accent2)' }}>● {agentId ? `ID ${agentId}` : 'Not registered'}</span>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 10, lineHeight: 1.5 }}>
+          Mint an onchain identity NFT for your agent, record reputation, and get verified.
+        </p>
+        <button
+          className="anchor-swap-btn"
+          style={{ width: 'auto', padding: '10px 20px', fontSize: 13 }}
+          disabled={isPending || !address}
+          onClick={() => run('register', {
+            address: IDENTITY_REGISTRY,
+            abi: ERC8004_IDENTITY_ABI,
+            functionName: 'register',
+            args: [AGENT_METADATA_URI],
+            gas: 300000n,
+          })}
+        >
+          {isPending ? 'Registering…' : 'Register Agent Identity'}
+        </button>
       </div>
 
       <div className="anchor-card">

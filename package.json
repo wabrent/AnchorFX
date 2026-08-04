@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "deploy:router": "node scripts/deploy.mjs",
     "fund": "node scripts/fund.mjs",
-    "agent": "node scripts/agent.mjs"
+    "agent": "node scripts/agent.mjs",
+    "identity": "node scripts/identity.mjs"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.11",

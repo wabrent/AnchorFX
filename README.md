@@ -182,10 +182,16 @@ node scripts/fund.mjs 10 eurc   # 10 EURC
 # Runs a full ERC-8183 job lifecycle with zero human clicks:
 # client funds provider -> createJob -> setBudget -> approve+fund -> submit -> complete
 npm run agent
+
+# Registers an ERC-8004 agent identity, records reputation, and passes validation:
+# register() -> giveFeedback() -> validationRequest() -> validationResponse()
+npm run identity
 ```
 
 The agent generates a throwaway provider wallet, funds it with USDC, posts a job,
 and settles it — everything signed by code, settled in USDC on Arc.
+The identity script mints an onchain identity NFT for the agent, records a
+reputation score, and verifies credentials via the ERC-8004 registries.
 
 ### Circle Agent Stack alignment
 
