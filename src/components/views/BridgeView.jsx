@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import {
   useAccount,
-  useSwitchChain,
   useChainId,
   useReadContract,
   useWriteContract,
@@ -17,10 +16,10 @@ export default function BridgeView() {
   const { address } = useAccount()
   const { notify } = useAppState()
   const chainId = useChainId()
-  const { switchChain } = useSwitchChain()
   const [sourceKey, setSourceKey] = useState('sepolia')
   const [amount, setAmount] = useState('')
   const [approved, setApproved] = useState(false)
+  const [switching, setSwitching] = useState(false)
   const actionRef = useRef(null)
 
   const source = BRIDGE_SOURCES[sourceKey]
@@ -51,6 +50,45 @@ export default function BridgeView() {
   const allowanceOk = allowance !== undefined && parsedAmount > 0n && allowance >= parsedAmount
   const needsApprove = !approved && !allowanceOk
   const onRightChain = chainId === source.chain.id
+
+  async function handleSwitch() {
+    const provider = window.ethereum
+    if (!provider) {
+      notify('No Wallet', 'No wallet extension detected', 'error')
+      return
+    }
+    setSwitching(true)
+    const hexChain = '0x' + source.chain.id.toString(16)
+    try {
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: hexChain }],
+      })
+      notify('Switched', `Now on ${source.name}`, 'success')
+    } catch (err) {
+      if (err?.code === 4902) {
+        try {
+          await provider.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: hexChain,
+              chainName: source.chain.name,
+              nativeCurrency: source.chain.nativeCurrency,
+              rpcUrls: [source.rpc],
+              blockExplorerUrls: source.chain.blockExplorers ? [source.chain.blockExplorers.default.url] : undefined,
+            }],
+          })
+          notify('Network Added', `Added and switched to ${source.name}`, 'success')
+        } catch (err2) {
+          notify('Switch Failed', err2?.message || 'Could not add network', 'error')
+        }
+      } else {
+        notify('Switch Failed', err?.message || 'Could not switch network', 'error')
+      }
+    } finally {
+      setSwitching(false)
+    }
+  }
 
   useEffect(() => {
     if (!receipt) return
@@ -172,8 +210,8 @@ export default function BridgeView() {
         </div>
 
         {!onRightChain ? (
-          <button className="anchor-swap-btn" onClick={() => switchChain({ chainId: source.chain.id })}>
-            Switch to {source.name}
+          <button className="anchor-swap-btn" onClick={handleSwitch} disabled={switching}>
+            {switching ? 'Switching…' : `Switch to ${source.name}`}
           </button>
         ) : needsApprove ? (
           <button className="anchor-swap-btn" onClick={handleApprove} disabled={isPending || !amount}>
